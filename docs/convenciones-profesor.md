@@ -1,6 +1,14 @@
 # Convenciones del profesor (guías 06–12 de Programación III)
 
-> Fuente: guías vistas en clase hasta ahora (06 a 12), en https://caflorezvi.github.io/guias-programacion3/
+> Fuentes (únicas): las guías vistas en clase hasta ahora.
+> - https://caflorezvi.github.io/guias-programacion3/06.guards-manejo-resultados.html
+> - https://caflorezvi.github.io/guias-programacion3/07.colecciones.html
+> - https://caflorezvi.github.io/guias-programacion3/08.recursividad.html
+> - https://caflorezvi.github.io/guias-programacion3/09.structs.html
+> - https://caflorezvi.github.io/guias-programacion3/10.streams.html
+> - https://caflorezvi.github.io/guias-programacion3/11.archivos.html
+> - https://caflorezvi.github.io/guias-programacion3/12.procesos.html
+>
 > Este documento resume **cómo escribe código el profesor** para que el proyecto se vea como él espera.
 > Claude Code: sigue estas convenciones al escribir o revisar código de este repo.
 
