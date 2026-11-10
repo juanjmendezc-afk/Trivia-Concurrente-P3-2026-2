@@ -29,7 +29,7 @@ defmodule Trivia.Bot do
   end
 
   def decidir(_dificultad, _nivel_pregunta, _respuesta_correcta, _tiempo_pregunta) do
-    {:error, "Dificultad, nivel, respuesta o tiempo inválidos"}
+    {:error, :argumentos_invalidos}
   end
 
   defp probabilidad_acierto(:facil, :basico), do: 40
