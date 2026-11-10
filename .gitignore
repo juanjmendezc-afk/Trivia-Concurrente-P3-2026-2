@@ -25,7 +25,3 @@ proyecto_trivia-*.tar
 # Datos generados al ejecutar (no se suben)
 /data/users.json
 /data/results.log
-
-# Datos generados al ejecutar (no se suben)
-/data/users.json
-/data/results.log
