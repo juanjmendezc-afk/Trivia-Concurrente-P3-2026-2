@@ -257,6 +257,8 @@ El cliente envía a `{:servidor, nodo_servidor}` y espera con `receive ... after
 **Respuesta** (siempre la misma forma): `{:respuesta, {:ok, datos}}` o `{:respuesta, {:error, :motivo}}`. Ejemplos:
 
 - `create_game` → `{:ok, %{id: "P-1001", nivel: :basico}}`
+- `connect` → `{:ok, %{usuario: "pedro", registrado: true}}` (`registrado: false` si el usuario ya existía)
+- `disconnect` → `{:ok, %{usuario: "pedro"}}`
 - `add_bot` → `{:ok, "bot_1"}`
 - `score` → `{:ok, %{puntaje: 120, partidas: 6, por_tema: %{"historia" => %{puntaje: 75, nivel: :intermedio}}}}`
 
@@ -265,7 +267,7 @@ El cliente envía a `{:servidor, nodo_servidor}` y espera con `receive ... after
 - **Gestores y Persistencia:** mensajes estilo guía 12, `{:accion, remitente, datos}` → respuesta al remitente.
 - **Partida** (GenServer): `GenServer.call(pid_partida, {:add_bot, :facil})`, `{:start_game}`, `{:responder, "pedro", "B"}`, `{:abandonar, "pedro"}`.
 - La Partida, al arrancar, envía `{:partida_iniciada, id, self()}` al `GestorPartidas`. Si el `id` ya existía con otro PID → hubo reinicio → el gestor actualiza el PID y avisa al creador.
-- Al terminar, la Partida envía `{:guardar_resultado, linea}` a `Persistencia` y `{:partida_terminada, id}` al `GestorPartidas` (libera a los jugadores).
+- Al terminar, la Partida llama `Persistencia.guardar_resultado(linea)` con la línea **sin fecha** (`P-1001|historia|basico|pedro|pedro:45,bot_1:30`); `Persistencia` le antepone la fecha y hora de Colombia (decisión de T2). También envía `{:partida_terminada, id}` al `GestorPartidas` (libera a los jugadores).
 
 ### ③ Partida → Receptores y Bots (notificaciones)
 
@@ -377,8 +379,9 @@ El servidor responde `{:error, :atomo}`. El **cliente** traduce el átomo a text
 | 11 | `:letra_invalida` | Responde A, B, C o D |
 | 11 | `:sin_ronda_abierta` | No hay una pregunta abierta |
 | extra | `:respuesta_repetida` | Ya respondiste esta pregunta (solo cuenta la primera) |
+| extra | `:sesion_abierta` | Ya tienes una sesión abierta; usa disconnect antes de conectar otro usuario |
 | extra | `:comando_invalido` | Comando no reconocido |
-| extra | `:parametros_invalidos` | Revisa los parámetros (preguntas de 1 a 10, tiempo mayor a 0) |
+| extra | `:parametros_invalidos` | Revisa los parámetros del comando (por ejemplo, preguntas de 1 a 10 o tiempo mayor a 0) |
 
 ---
 

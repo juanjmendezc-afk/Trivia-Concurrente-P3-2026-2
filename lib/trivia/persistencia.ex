@@ -17,6 +17,9 @@ defmodule Trivia.Persistencia do
 
   # ---------- Funciones cliente: solo envían mensajes ----------
 
+  # Carpeta donde viven los archivos por defecto
+  def carpeta_datos, do: @carpeta_datos
+
   # Arranca el proceso y lo registra con nombre
   def iniciar(carpeta \\ @carpeta_datos) do
     case Process.whereis(@nombre) do
