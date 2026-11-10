@@ -1,0 +1,1154 @@
+[
+  {
+    "tema": "historia",
+    "nivel": "basico",
+    "enunciado": "¿En qué año llegó Cristóbal Colón a América?",
+    "opciones": {
+      "A": "1492",
+      "B": "1453",
+      "C": "1519",
+      "D": "1607"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "historia",
+    "nivel": "basico",
+    "enunciado": "¿Qué civilización construyó las pirámides de Guiza?",
+    "opciones": {
+      "A": "Romana",
+      "B": "Egipcia",
+      "C": "Maya",
+      "D": "Persa"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "historia",
+    "nivel": "basico",
+    "enunciado": "¿Quién fue el primer presidente de Estados Unidos?",
+    "opciones": {
+      "A": "Abraham Lincoln",
+      "B": "Thomas Jefferson",
+      "C": "George Washington",
+      "D": "John Adams"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "historia",
+    "nivel": "basico",
+    "enunciado": "¿En qué país comenzó la Revolución Industrial?",
+    "opciones": {
+      "A": "Francia",
+      "B": "Alemania",
+      "C": "Italia",
+      "D": "Reino Unido"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "historia",
+    "nivel": "basico",
+    "enunciado": "¿Cuál fue la capital del Imperio romano?",
+    "opciones": {
+      "A": "Roma",
+      "B": "Atenas",
+      "C": "Cartago",
+      "D": "Alejandría"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "historia",
+    "nivel": "basico",
+    "enunciado": "¿Qué muro cayó en 1989 y simbolizó el fin de la división alemana?",
+    "opciones": {
+      "A": "Muro de Adriano",
+      "B": "Muro de Berlín",
+      "C": "Gran Muralla",
+      "D": "Muro de las Lamentaciones"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "historia",
+    "nivel": "basico",
+    "enunciado": "¿Quién lideró la independencia de gran parte del norte de Suramérica?",
+    "opciones": {
+      "A": "José de San Martín",
+      "B": "Miguel Hidalgo",
+      "C": "Simón Bolívar",
+      "D": "Bernardo O'Higgins"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "historia",
+    "nivel": "basico",
+    "enunciado": "¿Qué pueblo antiguo desarrolló la democracia en Atenas?",
+    "opciones": {
+      "A": "Fenicios",
+      "B": "Etruscos",
+      "C": "Sumerios",
+      "D": "Griegos"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "historia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué tratado puso fin oficialmente a la Primera Guerra Mundial entre Alemania y los Aliados?",
+    "opciones": {
+      "A": "Tratado de Versalles",
+      "B": "Tratado de Utrecht",
+      "C": "Tratado de Tordesillas",
+      "D": "Tratado de París de 1763"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "historia",
+    "nivel": "intermedio",
+    "enunciado": "¿En qué año cayó Constantinopla ante los otomanos?",
+    "opciones": {
+      "A": "1492",
+      "B": "1453",
+      "C": "1415",
+      "D": "1521"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "historia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué dinastía gobernaba China durante los viajes de Zheng He?",
+    "opciones": {
+      "A": "Qing",
+      "B": "Han",
+      "C": "Ming",
+      "D": "Tang"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "historia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué conferencia de 1884-1885 reguló el reparto colonial europeo de África?",
+    "opciones": {
+      "A": "Yalta",
+      "B": "Berlín de 1945",
+      "C": "Viena",
+      "D": "Conferencia de Berlín"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "historia",
+    "nivel": "intermedio",
+    "enunciado": "¿Quién fue el líder de la Revolución haitiana asociado a su primera etapa?",
+    "opciones": {
+      "A": "Toussaint Louverture",
+      "B": "Napoleón Bonaparte",
+      "C": "Jean-Jacques Dessalines",
+      "D": "Henri Christophe"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "historia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué imperio tuvo como capital a Tenochtitlan?",
+    "opciones": {
+      "A": "Inca",
+      "B": "Azteca",
+      "C": "Maya",
+      "D": "Muisca"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "historia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué documento inglés de 1215 limitó el poder del rey Juan?",
+    "opciones": {
+      "A": "Petición de Derechos",
+      "B": "Bill of Rights",
+      "C": "Carta Magna",
+      "D": "Acta de Unión"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "historia",
+    "nivel": "intermedio",
+    "enunciado": "¿En qué año comenzó la Revolución francesa?",
+    "opciones": {
+      "A": "1776",
+      "B": "1810",
+      "C": "1848",
+      "D": "1789"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "historia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué emperador romano promulgó el Edicto de Milán junto con Licinio en 313?",
+    "opciones": {
+      "A": "Constantino I",
+      "B": "Teodosio I",
+      "C": "Diocleciano",
+      "D": "Justiniano"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "historia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué batalla de 732 frenó el avance omeya hacia el norte de Europa occidental?",
+    "opciones": {
+      "A": "Hastings",
+      "B": "Poitiers o Tours",
+      "C": "Agincourt",
+      "D": "Lepanto"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "historia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué acuerdo de 1648 suele asociarse con el origen del sistema moderno de Estados soberanos?",
+    "opciones": {
+      "A": "Congreso de Viena",
+      "B": "Paz de Augsburgo",
+      "C": "Paz de Westfalia",
+      "D": "Tratado de Utrecht"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "historia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué rey de Mali realizó una célebre peregrinación a La Meca en 1324?",
+    "opciones": {
+      "A": "Sundiata Keita",
+      "B": "Askia Muhammad",
+      "C": "Sonni Ali",
+      "D": "Mansa Musa"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "historia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué reforma japonesa de 1868 restauró el poder imperial y aceleró la modernización?",
+    "opciones": {
+      "A": "Restauración Meiji",
+      "B": "Reforma Taika",
+      "C": "Rebelión Satsuma",
+      "D": "Era Edo"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "historia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué cultura mesopotámica desarrolló uno de los primeros sistemas de escritura cuneiforme?",
+    "opciones": {
+      "A": "Acadia",
+      "B": "Sumeria",
+      "C": "Asiria",
+      "D": "Babilonia neobabilónica"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "historia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué conferencia de 1814-1815 reorganizó Europa tras las guerras napoleónicas?",
+    "opciones": {
+      "A": "Conferencia de Potsdam",
+      "B": "Congreso de Berlín",
+      "C": "Congreso de Viena",
+      "D": "Congreso de Aquisgrán"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "historia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué líder encabezó la unificación alemana como canciller prusiano?",
+    "opciones": {
+      "A": "Guillermo II",
+      "B": "Federico el Grande",
+      "C": "Metternich",
+      "D": "Otto von Bismarck"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "basico",
+    "enunciado": "¿Qué órgano bombea la sangre por el cuerpo humano?",
+    "opciones": {
+      "A": "Corazón",
+      "B": "Pulmón",
+      "C": "Hígado",
+      "D": "Riñón"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "basico",
+    "enunciado": "¿Cuál es el planeta más grande del sistema solar?",
+    "opciones": {
+      "A": "Marte",
+      "B": "Júpiter",
+      "C": "Venus",
+      "D": "Mercurio"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "basico",
+    "enunciado": "¿Qué gas absorben principalmente las plantas durante la fotosíntesis?",
+    "opciones": {
+      "A": "Oxígeno",
+      "B": "Nitrógeno",
+      "C": "Dióxido de carbono",
+      "D": "Hidrógeno"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "basico",
+    "enunciado": "¿A qué temperatura hierve el agua pura al nivel del mar?",
+    "opciones": {
+      "A": "50 °C",
+      "B": "90 °C",
+      "C": "120 °C",
+      "D": "100 °C"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "basico",
+    "enunciado": "¿Cuál es la unidad básica de los seres vivos?",
+    "opciones": {
+      "A": "Célula",
+      "B": "Átomo",
+      "C": "Tejido",
+      "D": "Órgano"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "basico",
+    "enunciado": "¿Qué fuerza nos mantiene sobre la superficie terrestre?",
+    "opciones": {
+      "A": "Magnetismo",
+      "B": "Gravedad",
+      "C": "Fricción",
+      "D": "Electricidad"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "basico",
+    "enunciado": "¿Qué vitamina puede producir la piel con ayuda de la luz solar?",
+    "opciones": {
+      "A": "Vitamina C",
+      "B": "Vitamina B12",
+      "C": "Vitamina D",
+      "D": "Vitamina K"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "basico",
+    "enunciado": "¿Cuál es el satélite natural de la Tierra?",
+    "opciones": {
+      "A": "Europa",
+      "B": "Titán",
+      "C": "Fobos",
+      "D": "La Luna"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué molécula almacena la información genética en la mayoría de los seres vivos?",
+    "opciones": {
+      "A": "ADN",
+      "B": "ATP",
+      "C": "Glucosa",
+      "D": "Hemoglobina"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué escala se utiliza para medir la dureza de los minerales?",
+    "opciones": {
+      "A": "Richter",
+      "B": "Mohs",
+      "C": "Celsius",
+      "D": "Beaufort"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué partículas subatómicas tienen carga eléctrica negativa?",
+    "opciones": {
+      "A": "Protones",
+      "B": "Neutrones",
+      "C": "Electrones",
+      "D": "Núcleos"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "intermedio",
+    "enunciado": "¿Cuál es el principal gas de la atmósfera terrestre?",
+    "opciones": {
+      "A": "Oxígeno",
+      "B": "Argón",
+      "C": "Dióxido de carbono",
+      "D": "Nitrógeno"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué proceso celular produce dos células hijas genéticamente similares?",
+    "opciones": {
+      "A": "Mitosis",
+      "B": "Meiosis",
+      "C": "Fecundación",
+      "D": "Fotosíntesis"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué tipo de enlace químico implica compartir pares de electrones?",
+    "opciones": {
+      "A": "Iónico",
+      "B": "Covalente",
+      "C": "Metálico",
+      "D": "Puente de hidrógeno"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué estructura celular regula el paso de sustancias hacia dentro y fuera de la célula?",
+    "opciones": {
+      "A": "Pared celular",
+      "B": "Núcleo",
+      "C": "Membrana plasmática",
+      "D": "Ribosoma"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué fenómeno explica que la luz cambie de dirección al pasar entre medios?",
+    "opciones": {
+      "A": "Difracción",
+      "B": "Interferencia",
+      "C": "Reflexión",
+      "D": "Refracción"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué principio establece que no se puede conocer simultáneamente con precisión arbitraria posición y momento?",
+    "opciones": {
+      "A": "Principio de incertidumbre de Heisenberg",
+      "B": "Principio de exclusión de Pauli",
+      "C": "Ley de Hubble",
+      "D": "Principio de equivalencia"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué enzima sintetiza ARN usando una cadena de ADN como molde?",
+    "opciones": {
+      "A": "ADN ligasa",
+      "B": "ARN polimerasa",
+      "C": "Helicasa",
+      "D": "Transcriptasa inversa"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "avanzado",
+    "enunciado": "¿Cuál es el nombre de la frontera alrededor de un agujero negro desde la que nada puede escapar?",
+    "opciones": {
+      "A": "Singularidad",
+      "B": "Disco de acreción",
+      "C": "Horizonte de sucesos",
+      "D": "Ergosfera"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué ley relaciona la presión y el volumen de un gas a temperatura constante?",
+    "opciones": {
+      "A": "Ley de Charles",
+      "B": "Ley de Gay-Lussac",
+      "C": "Ley de Avogadro",
+      "D": "Ley de Boyle-Mariotte"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué orgánulo realiza la fosforilación oxidativa en células eucariotas?",
+    "opciones": {
+      "A": "Mitocondria",
+      "B": "Lisosoma",
+      "C": "Aparato de Golgi",
+      "D": "Cloroplasto"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué tipo de radiación electromagnética tiene mayor frecuencia?",
+    "opciones": {
+      "A": "Ondas de radio",
+      "B": "Rayos gamma",
+      "C": "Microondas",
+      "D": "Infrarrojo"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué constante física representa la relación entre energía y frecuencia de un fotón?",
+    "opciones": {
+      "A": "Constante gravitacional",
+      "B": "Constante de Boltzmann",
+      "C": "Constante de Planck",
+      "D": "Número de Avogadro"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "ciencia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué mecanismo evolutivo cambia aleatoriamente las frecuencias alélicas, especialmente en poblaciones pequeñas?",
+    "opciones": {
+      "A": "Selección sexual",
+      "B": "Flujo génico",
+      "C": "Mutación dirigida",
+      "D": "Deriva genética"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "basico",
+    "enunciado": "¿Cuál es el océano más grande de la Tierra?",
+    "opciones": {
+      "A": "Pacífico",
+      "B": "Atlántico",
+      "C": "Índico",
+      "D": "Ártico"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "basico",
+    "enunciado": "¿En qué continente se encuentra Egipto?",
+    "opciones": {
+      "A": "Asia",
+      "B": "África",
+      "C": "Europa",
+      "D": "Oceanía"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "basico",
+    "enunciado": "¿Cuál es la capital de Colombia?",
+    "opciones": {
+      "A": "Medellín",
+      "B": "Cali",
+      "C": "Bogotá",
+      "D": "Cartagena"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "basico",
+    "enunciado": "¿Qué línea imaginaria divide la Tierra en hemisferios norte y sur?",
+    "opciones": {
+      "A": "Trópico de Cáncer",
+      "B": "Meridiano de Greenwich",
+      "C": "Círculo Polar Ártico",
+      "D": "Ecuador"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "basico",
+    "enunciado": "¿Cuál es el desierto cálido más extenso del mundo?",
+    "opciones": {
+      "A": "Sahara",
+      "B": "Gobi",
+      "C": "Kalahari",
+      "D": "Atacama"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "basico",
+    "enunciado": "¿En qué cordillera se encuentra el monte Everest?",
+    "opciones": {
+      "A": "Andes",
+      "B": "Himalaya",
+      "C": "Alpes",
+      "D": "Rocosas"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "basico",
+    "enunciado": "¿Qué país tiene forma de bota en el mapa europeo?",
+    "opciones": {
+      "A": "Grecia",
+      "B": "Portugal",
+      "C": "Italia",
+      "D": "Croacia"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "basico",
+    "enunciado": "¿Cuál es la capital de Japón?",
+    "opciones": {
+      "A": "Kioto",
+      "B": "Osaka",
+      "C": "Hiroshima",
+      "D": "Tokio"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué río atraviesa la ciudad de Budapest?",
+    "opciones": {
+      "A": "Danubio",
+      "B": "Rin",
+      "C": "Sena",
+      "D": "Volga"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "intermedio",
+    "enunciado": "¿Cuál es el país más extenso de África por superficie?",
+    "opciones": {
+      "A": "Sudáfrica",
+      "B": "Argelia",
+      "C": "República Democrática del Congo",
+      "D": "Sudán"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué estrecho separa Asia de América del Norte?",
+    "opciones": {
+      "A": "Gibraltar",
+      "B": "Ormuz",
+      "C": "Bering",
+      "D": "Magallanes"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "intermedio",
+    "enunciado": "¿Cuál es la capital de Nueva Zelanda?",
+    "opciones": {
+      "A": "Auckland",
+      "B": "Christchurch",
+      "C": "Hamilton",
+      "D": "Wellington"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "intermedio",
+    "enunciado": "¿En qué país se encuentra la región histórica de Transilvania?",
+    "opciones": {
+      "A": "Rumania",
+      "B": "Hungría",
+      "C": "Bulgaria",
+      "D": "Serbia"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué lago es compartido por Perú y Bolivia?",
+    "opciones": {
+      "A": "Maracaibo",
+      "B": "Titicaca",
+      "C": "Nicaragua",
+      "D": "Victoria"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "intermedio",
+    "enunciado": "¿Cuál de estos países no tiene salida al mar?",
+    "opciones": {
+      "A": "Ecuador",
+      "B": "Uruguay",
+      "C": "Paraguay",
+      "D": "Chile"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué corriente oceánica cálida influye en el clima de Europa occidental?",
+    "opciones": {
+      "A": "Corriente de Humboldt",
+      "B": "Corriente de Benguela",
+      "C": "Corriente de California",
+      "D": "Corriente del Golfo"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué país posee el enclave de Cabinda, separado del resto de su territorio?",
+    "opciones": {
+      "A": "Angola",
+      "B": "Namibia",
+      "C": "Mozambique",
+      "D": "Guinea Ecuatorial"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "avanzado",
+    "enunciado": "¿Cuál es el punto más bajo de la superficie terrestre en tierra emergida?",
+    "opciones": {
+      "A": "Valle de la Muerte",
+      "B": "Costa del mar Muerto",
+      "C": "Depresión de Afar",
+      "D": "Depresión del Turpan"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué país africano está completamente rodeado por Sudáfrica?",
+    "opciones": {
+      "A": "Esuatini",
+      "B": "Botsuana",
+      "C": "Lesoto",
+      "D": "Zimbabue"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué canal conecta el mar Mediterráneo con el mar Rojo?",
+    "opciones": {
+      "A": "Canal de Panamá",
+      "B": "Canal de Corinto",
+      "C": "Canal de Kiel",
+      "D": "Canal de Suez"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué país contiene la mayor parte de la cuenca del río Okavango?",
+    "opciones": {
+      "A": "Botsuana",
+      "B": "Zambia",
+      "C": "Angola",
+      "D": "Namibia"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "avanzado",
+    "enunciado": "¿Cuál es la capital constitucional de Bolivia?",
+    "opciones": {
+      "A": "La Paz",
+      "B": "Sucre",
+      "C": "Cochabamba",
+      "D": "Santa Cruz de la Sierra"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué sistema montañoso marca parte de la frontera natural entre Francia y España?",
+    "opciones": {
+      "A": "Apeninos",
+      "B": "Cárpatos",
+      "C": "Pirineos",
+      "D": "Balcanes"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "geografia",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué archipiélago autónomo portugués se ubica en el Atlántico norte?",
+    "opciones": {
+      "A": "Canarias",
+      "B": "Madeira",
+      "C": "Cabo Verde",
+      "D": "Azores"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "basico",
+    "enunciado": "¿Qué es una variable en programación?",
+    "opciones": {
+      "A": "Un espacio nombrado para almacenar un valor",
+      "B": "Un tipo de impresora",
+      "C": "Un error del sistema",
+      "D": "Un lenguaje de marcado"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "basico",
+    "enunciado": "¿Qué estructura permite ejecutar instrucciones repetidamente?",
+    "opciones": {
+      "A": "Condicional",
+      "B": "Bucle",
+      "C": "Comentario",
+      "D": "Importación"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "basico",
+    "enunciado": "¿Cuál de estos valores representa un booleano verdadero en muchos lenguajes?",
+    "opciones": {
+      "A": "\"verdadero\"",
+      "B": "1.5",
+      "C": "true",
+      "D": "null"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "basico",
+    "enunciado": "¿Qué símbolo se usa comúnmente para iniciar un comentario de una línea en Python?",
+    "opciones": {
+      "A": "//",
+      "B": "<!--",
+      "C": ";",
+      "D": "#"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "basico",
+    "enunciado": "¿Qué estructura permite tomar decisiones según una condición?",
+    "opciones": {
+      "A": "if",
+      "B": "for",
+      "C": "print",
+      "D": "return"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "basico",
+    "enunciado": "¿Qué función de Python muestra información en la consola?",
+    "opciones": {
+      "A": "input()",
+      "B": "print()",
+      "C": "len()",
+      "D": "type()"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "basico",
+    "enunciado": "¿Qué tipo de dato representa una secuencia ordenada y modificable en Python?",
+    "opciones": {
+      "A": "Tupla",
+      "B": "Cadena",
+      "C": "Lista",
+      "D": "Booleano"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "basico",
+    "enunciado": "¿Qué significa HTML?",
+    "opciones": {
+      "A": "High Transfer Machine Language",
+      "B": "Hyperlink Text Main Logic",
+      "C": "Home Tool Markup Language",
+      "D": "HyperText Markup Language"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué principio de programación orientada a objetos agrupa datos y métodos y controla su acceso?",
+    "opciones": {
+      "A": "Encapsulamiento",
+      "B": "Herencia",
+      "C": "Polimorfismo",
+      "D": "Recursión"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué estructura de datos sigue el principio LIFO?",
+    "opciones": {
+      "A": "Cola",
+      "B": "Pila",
+      "C": "Árbol",
+      "D": "Grafo"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "intermedio",
+    "enunciado": "¿Cuál es la complejidad temporal promedio de búsqueda en una tabla hash bien distribuida?",
+    "opciones": {
+      "A": "O(n²)",
+      "B": "O(n)",
+      "C": "O(1)",
+      "D": "O(log n)"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué método HTTP se utiliza normalmente para solicitar la representación de un recurso?",
+    "opciones": {
+      "A": "POST",
+      "B": "PATCH",
+      "C": "DELETE",
+      "D": "GET"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué técnica consiste en que una función se invoque a sí misma?",
+    "opciones": {
+      "A": "Recursividad",
+      "B": "Iteración externa",
+      "C": "Compilación",
+      "D": "Serialización"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué comando de Git crea una copia local de un repositorio remoto?",
+    "opciones": {
+      "A": "git push",
+      "B": "git clone",
+      "C": "git merge",
+      "D": "git status"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué patrón de diseño garantiza una única instancia de una clase?",
+    "opciones": {
+      "A": "Factory",
+      "B": "Observer",
+      "C": "Singleton",
+      "D": "Adapter"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "intermedio",
+    "enunciado": "¿Qué formato ligero se usa comúnmente para intercambiar datos estructurados mediante pares clave-valor?",
+    "opciones": {
+      "A": "XML Schema",
+      "B": "CSV",
+      "C": "YAML Front Matter",
+      "D": "JSON"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué estructura de datos se utiliza habitualmente para implementar una cola de prioridad eficiente?",
+    "opciones": {
+      "A": "Montículo binario",
+      "B": "Lista enlazada simple sin orden",
+      "C": "Pila",
+      "D": "Matriz dispersa"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué algoritmo encuentra caminos mínimos desde un origen en grafos con pesos no negativos?",
+    "opciones": {
+      "A": "Bellman-Ford con pesos negativos",
+      "B": "Dijkstra",
+      "C": "Floyd-Warshall exclusivamente",
+      "D": "Kruskal"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué propiedad ACID garantiza que una transacción se complete totalmente o no tenga efecto?",
+    "opciones": {
+      "A": "Consistencia",
+      "B": "Aislamiento",
+      "C": "Atomicidad",
+      "D": "Durabilidad"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué técnica evita condiciones de carrera al permitir acceso exclusivo a una sección crítica?",
+    "opciones": {
+      "A": "Memoización",
+      "B": "Balanceo de carga",
+      "C": "Paginación",
+      "D": "Exclusión mutua"
+    },
+    "respuesta": "D"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "avanzado",
+    "enunciado": "¿Cuál es la complejidad temporal de merge sort en el peor caso?",
+    "opciones": {
+      "A": "O(n log n)",
+      "B": "O(n²)",
+      "C": "O(log n)",
+      "D": "O(n)"
+    },
+    "respuesta": "A"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "avanzado",
+    "enunciado": "En Erlang/Elixir, ¿qué modelo de concurrencia se basa en procesos aislados que se comunican mediante mensajes?",
+    "opciones": {
+      "A": "Memoria compartida",
+      "B": "Modelo de actores",
+      "C": "Paralelismo SIMD",
+      "D": "Hilos verdes con variables globales"
+    },
+    "respuesta": "B"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué problema resuelve principalmente un índice B-tree en una base de datos?",
+    "opciones": {
+      "A": "Cifrado de columnas",
+      "B": "Compresión de imágenes",
+      "C": "Acelerar búsquedas y rangos",
+      "D": "Evitar todas las transacciones"
+    },
+    "respuesta": "C"
+  },
+  {
+    "tema": "programacion",
+    "nivel": "avanzado",
+    "enunciado": "¿Qué técnica de seguridad dificulta ataques de fuerza bruta almacenando contraseñas con una función lenta y sal?",
+    "opciones": {
+      "A": "Codificación Base64",
+      "B": "Cifrado reversible",
+      "C": "Checksum simple",
+      "D": "Hash de contraseñas con sal (p. ej., Argon2)"
+    },
+    "respuesta": "D"
+  }
+]
