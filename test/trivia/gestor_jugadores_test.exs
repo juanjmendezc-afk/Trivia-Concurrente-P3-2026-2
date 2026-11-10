@@ -95,6 +95,29 @@ defmodule Trivia.GestorJugadoresTest do
                  GestorJugadores.abrir_sesion(estado, cliente, usuario, clave)
       end
     end
+
+    test "rechaza usuarios con los separadores del historial (| , :)" do
+      {cliente, _otro} = clientes()
+      estado = GestorJugadores.nuevo(%{})
+
+      for usuario <- ["a|b", "a,b", "a:b", "ana:99,bot_9", "|", ",", ":"] do
+        assert {:error, :parametros_invalidos} =
+                 GestorJugadores.abrir_sesion(estado, cliente, usuario, "1234")
+      end
+    end
+
+    test "otros símbolos en el usuario se aceptan, y la clave no tiene restricción de símbolos" do
+      {cliente, _otro} = clientes()
+      estado = GestorJugadores.nuevo(%{})
+
+      for usuario <- ["ana.perez", "ana-1", "ana_2", "ñandú"] do
+        assert {:ok, _estado, :nuevo} =
+                 GestorJugadores.abrir_sesion(estado, cliente, usuario, "1234")
+      end
+
+      assert {:ok, _estado, :nuevo} =
+               GestorJugadores.abrir_sesion(estado, cliente, "pedro", "a|b,c:d")
+    end
   end
 
   describe "cerrar_sesion" do

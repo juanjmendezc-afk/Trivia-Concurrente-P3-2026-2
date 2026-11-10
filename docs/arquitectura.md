@@ -112,6 +112,7 @@ Todos los archivos van en `proyecto_trivia/data/`. Solo `Persistencia` los toca.
 ```
 
 - Solo usuario y clave (texto plano). Nada de estadísticas.
+- El usuario no puede tener espacios ni los símbolos `|`, `,` y `:` (son los separadores de `results.log`); si los tiene, `connect` responde `:parametros_invalidos`. La clave no tiene restricción de símbolos.
 - Al cargarlo se convierte en un mapa `%{"pedro" => "1234", ...}`.
 - Si no existe (primer arranque) → mapa vacío.
 
@@ -151,76 +152,13 @@ Todos los archivos van en `proyecto_trivia/data/`. Solo `Persistencia` los toca.
 
 - Dos niveles de separadores (como el CSV de la Pokédex, guía 11): `|` entre campos, `,` entre jugadores, `:` entre nombre y puntaje.
 - Se escribe con `[:append]`; se lee con streams.
-- Las estadísticas se calculan desde aquí, ignorando nombres que empiezan por `bot_`.
+- **Única fuente de estadísticas.** Puntaje de un jugador en un tema = suma de sus puntajes en las líneas de ese tema. Los nombres que empiezan por `bot_` se ignoran.
 - Se registran las partidas terminadas y las abandonadas (con los puntajes hasta ese momento). **No** se registran las canceladas antes de iniciar ni las que se reiniciaron.
 
 ### Qué se sube a GitHub
 
 - `data/questions.json`: **sí** (es entregable).
 - `data/users.json` y `data/results.log`: **no** (están en `.gitignore`; se generan solos).
-
----
-
-## 3. Formatos de datos
-
-Todos los archivos van en `proyecto_trivia/data/`. Solo `Persistencia` los lee y escribe. La ruta se arma con `Path.join` y `__DIR__` (guía 11).
-
-### `data/users.json` — usuarios
-
-```json
-[
-  {"usuario": "pedro", "clave": "1234"},
-  {"usuario": "carlos", "clave": "abcd"}
-]
-```
-
-- Solo usuario y clave en texto plano (enunciado). Nada de estadísticas.
-- Al cargarlo se convierte en un mapa `%{"pedro" => "1234", ...}`.
-- Si no existe (primer arranque), se empieza con un mapa vacío.
-
-### `data/questions.json` — banco de preguntas
-
-```json
-[
-  {
-    "tema": "historia",
-    "nivel": "basico",
-    "enunciado": "¿En qué año llegó Colón a América?",
-    "opciones": {"A": "1492", "B": "1500", "C": "1810", "D": "1453"},
-    "respuesta": "A"
-  }
-]
-```
-
-- Temas: **`historia`, `ciencia`, `geografia`, `programacion`**.
-- **8 preguntas por nivel en cada tema** → 24 por tema → **96 en total**.
-- `tema` en minúscula y sin espacios; `nivel` es `basico`, `intermedio` o `avanzado`; `respuesta` es una letra de `A` a `D`.
-
-### `data/results.log` — historial (una línea por partida)
-
-```
-2026-11-12 20:15:03|P-1001|historia|basico|pedro|pedro:45,bot_1:30,bot_2:-5
-2026-11-12 20:31:47|P-1002|ciencia|intermedio|bot_2|carlos:20,bot_1:15,bot_2:38
-```
-
-| Campo | Ejemplo | Nota |
-|---|---|---|
-| fecha y hora | `2026-11-12 20:15:03` | Fecha en cada línea del histórico (guía 11) |
-| id | `P-1001` | |
-| tema | `historia` | |
-| nivel | `basico` | Nivel del creador al crear la partida |
-| ganador(es) | `pedro` o `pedro,bot_1` | Empate: separados por coma |
-| puntajes | `pedro:45,bot_1:30,bot_2:-5` | Todos los jugadores, bots incluidos |
-
-- Dos niveles de separadores (como el CSV de la Pokédex, guía 11): `|` entre campos, `,` entre jugadores, `:` entre nombre y puntaje.
-- Se escribe con `[:append]` y se lee con streams.
-- **Única fuente de estadísticas.** Puntaje de un jugador en un tema = suma de sus puntajes en las líneas de ese tema. Los nombres que empiezan por `bot_` se ignoran.
-- Se registran las partidas terminadas y las abandonadas (con los puntajes hasta ese momento). No se registran las canceladas antes de iniciar ni las reiniciadas.
-
-### Qué va al repositorio
-
-- `data/questions.json`: **sí** (entregable).
-- `data/users.json` y `data/results.log`: **no**, se generan solos (están en `.gitignore`).
 
 ---
 
@@ -304,7 +242,12 @@ Bots y Receptores reciben **exactamente las mismas** notificaciones.
 
 ### B. `connect pedro 1234`
 
-- `GestorJugadores` verifica en orden: no empieza por `bot_`, no está ya conectado, la clave coincide.
+- `GestorJugadores` verifica en este orden y responde con el primer error que encuentre:
+  1. Parámetros válidos: usuario sin espacios ni `|`, `,` o `:`, y clave no vacía → `:parametros_invalidos`.
+  2. El usuario no empieza por `bot_` → `:usuario_reservado`.
+  3. Ese cliente no tiene ya una sesión abierta → `:sesion_abierta`.
+  4. El usuario no está conectado desde otro cliente → `:ya_conectado`.
+  5. La clave coincide → `:clave_incorrecta`.
 - Si el usuario no existe, lo registra y `Persistencia` actualiza `users.json`.
 - El `Servidor` empieza a vigilar el proceso del cliente para detectar si se cierra (ver G).
 
@@ -381,7 +324,7 @@ El servidor responde `{:error, :atomo}`. El **cliente** traduce el átomo a text
 | extra | `:respuesta_repetida` | Ya respondiste esta pregunta (solo cuenta la primera) |
 | extra | `:sesion_abierta` | Ya tienes una sesión abierta; usa disconnect antes de conectar otro usuario |
 | extra | `:comando_invalido` | Comando no reconocido |
-| extra | `:parametros_invalidos` | Revisa los parámetros del comando (por ejemplo, preguntas de 1 a 10 o tiempo mayor a 0) |
+| extra | `:parametros_invalidos` | Revisa los parámetros del comando (por ejemplo, usuario sin espacios, barras verticales, comas ni dos puntos; preguntas de 1 a 10 o tiempo mayor a 0) |
 
 ---
 

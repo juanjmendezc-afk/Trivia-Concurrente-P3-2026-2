@@ -5,6 +5,8 @@ defmodule Trivia.GestorJugadores do
   @nombre :gestor_jugadores
   @espera 5000
   @prefijo_bot "bot_"
+  # Separadores de results.log: un usuario con alguno rompería el historial
+  @separadores_historial ["|", ",", ":"]
 
   # ---------- Lógica pura: cada operación devuelve el estado nuevo ----------
 
@@ -39,9 +41,11 @@ defmodule Trivia.GestorJugadores do
     end
   end
 
-  # Usuario sin espacios (dividir por espacios lo devuelve entero) y clave no vacía
+  # Usuario sin espacios (dividir por espacios lo devuelve entero) ni separadores
+  # del historial, y clave no vacía
   defp parametros_validos?(usuario, clave) when is_binary(usuario) and is_binary(clave) do
-    String.split(usuario) == [usuario] and clave != ""
+    String.split(usuario) == [usuario] and
+      not String.contains?(usuario, @separadores_historial) and clave != ""
   end
 
   defp parametros_validos?(_usuario, _clave), do: false
