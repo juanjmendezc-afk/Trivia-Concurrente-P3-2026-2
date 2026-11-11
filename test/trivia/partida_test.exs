@@ -120,6 +120,19 @@ defmodule Trivia.PartidaTest do
     test "alguien que no está en la partida no la cancela" do
       assert {:error, :sin_partida} = Partida.abandonar(partida_nueva(), "carlos")
     end
+
+    test "si sale el creador con la partida en curso, queda abandonada" do
+      partida = %{con_bots(partida_nueva(), 2) | estado: :en_curso}
+
+      assert {:ok, :abandonada} = Partida.abandonar(partida, "pedro")
+    end
+
+    test "en curso, cualquier otro usuario (incluidos los bots) no la abandona" do
+      partida = %{con_bots(partida_nueva(), 2) | estado: :en_curso}
+
+      assert {:error, :sin_partida} = Partida.abandonar(partida, "carlos")
+      assert {:error, :sin_partida} = Partida.abandonar(partida, "bot_1")
+    end
   end
 
   # ---------- Rondas (lógica pura; el reloj entra como argumento) ----------
@@ -394,6 +407,26 @@ defmodule Trivia.PartidaTest do
 
       assert Partida.linea_historial(partida) ==
                "P-1001|historia|basico|bot_2|pedro:20,bot_1:15,bot_2:38"
+    end
+
+    test "abandonar con una ronda abierta: la línea solo cuenta las rondas cerradas" do
+      preguntas = [pregunta(:basico, "B"), pregunta(:basico, "B")]
+
+      # Ronda 1 cerrada: pedro acierta al instante (+15) y bot_1 falla (-5)
+      {:ok, partida, _cierre} =
+        con_ronda(preguntas)
+        |> responde("pedro", "B", 0)
+        |> responde("bot_1", "A", 0)
+        |> Partida.cerrar_ronda()
+
+      # Ronda 2 abierta: pedro ya respondió bien, pero esa ronda no se cierra
+      {:ok, partida, _datos} = Partida.abrir_ronda(partida, 20_000)
+      partida = responde(partida, "pedro", "B", 20_000)
+
+      assert {:ok, :abandonada} = Partida.abandonar(partida, "pedro")
+
+      assert Partida.linea_historial(partida) ==
+               "P-1001|historia|basico|pedro|pedro:15,bot_1:-5,bot_2:0"
     end
 
     test "datos_fin reúne id, tema, nivel, ranking y ganadores" do
@@ -724,6 +757,63 @@ defmodule Trivia.PartidaTest do
       assert {:error, :sin_ronda_abierta} = GenServer.call(pid, {:responder, "pedro", "A"})
       assert {:error, :sin_ronda_abierta} = Partida.datos_pregunta(pid)
       refute_received {:pregunta, %{numero: 2}}
+    end
+
+    test "abandonar en curso termina ya: historial parcial, fin_partida a todos y bots detenidos" do
+      pid =
+        partida_con_bots(%{total_preguntas: 3, tiempo: 2, pausa_ms: 10}, [:dificil, :dificil])
+
+      referencia = Process.monitor(pid)
+      assert_receive {:partida_iniciada, "P-1001", ^pid}
+
+      {:ok, _} = GenServer.call(pid, {:start_game, "pedro"})
+      bots = Enum.map(:sys.get_state(pid).bots, fn bot -> bot.pid end)
+      monitores = Enum.map(bots, &Process.monitor/1)
+
+      # Ronda 1: pedro responde y la ronda cierra en cuanto responden los bots
+      assert_receive {:pregunta, %{numero: 1}}
+      {:ok, :recibida} = GenServer.call(pid, {:responder, "pedro", "A"})
+      assert_receive {:cierre_ronda, %{numero: 1, resultados: resultados}}, 2000
+      acumulados = Map.new(resultados, fn r -> {r.jugador, r.acumulado} end)
+
+      # Ronda 2 abierta (pedro no responde): abandona a mitad de ronda
+      assert_receive {:pregunta, %{numero: 2}}, 1000
+      assert {:ok, :abandonada} = GenServer.call(pid, {:abandonar, "pedro"})
+
+      # Termina ya: sin ronda 2 cerrada, sin ronda 3
+      assert_receive {:fin_partida, fin}
+      assert Map.new(fin.ranking, fn {_pos, jugador, puntaje} -> {jugador, puntaje} end) == acumulados
+      assert_receive {:partida_terminada, "P-1001"}
+      assert_receive {:DOWN, ^referencia, :process, ^pid, :normal}
+      refute_received {:cierre_ronda, %{numero: 2}}
+      refute_received {:pregunta, %{numero: 3}}
+
+      # Los bots se detienen. El motivo no se fija: si justo pedían datos_pregunta cuando la
+      # partida terminó, salen por esa llamada y no por :normal (el resultado es el mismo).
+      for {bot, monitor} <- Enum.zip(bots, monitores) do
+        assert_receive {:DOWN, ^monitor, :process, ^bot, _motivo}, 1000
+      end
+
+      # Una línea con los puntajes de la ronda 1
+      assert {:ok, [linea]} = Trivia.Persistencia.leer_historial()
+
+      assert String.ends_with?(
+               linea,
+               "pedro:#{acumulados["pedro"]},bot_1:#{acumulados["bot_1"]},bot_2:#{acumulados["bot_2"]}"
+             )
+    end
+
+    test "otro usuario no puede abandonar una partida en curso y la partida sigue" do
+      pid =
+        partida_con_bots(%{total_preguntas: 2, tiempo: 5, pausa_ms: 10}, [:dificil, :dificil])
+
+      {:ok, _} = GenServer.call(pid, {:start_game, "pedro"})
+      assert_receive {:pregunta, %{numero: 1}}
+
+      assert {:error, :sin_partida} = GenServer.call(pid, {:abandonar, "carlos"})
+      assert {:ok, %{numero: 1}} = Partida.datos_pregunta(pid)
+      refute_received {:fin_partida, _}
+      assert {:ok, []} = Trivia.Persistencia.leer_historial()
     end
 
     test "si no se puede guardar el historial, avisa y termina igual" do

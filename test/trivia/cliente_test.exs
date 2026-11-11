@@ -445,6 +445,22 @@ defmodule Trivia.ClienteTest do
       assert errores =~ "No hay una pregunta abierta"
     end
 
+    test "leave_game en curso muestra que la partida terminó y quedó registrada", %{
+      estado: estado
+    } do
+      {_, _, _} = ejecutar("create_game tema=historia preguntas=5 tiempo=15", estado)
+      {_, _, _} = ejecutar("add_bot facil", estado)
+      {_, _, _} = ejecutar("add_bot facil", estado)
+      {_, _, _} = ejecutar("start_game", estado)
+
+      {resultado, salida, errores} = ejecutar("leave_game", estado)
+
+      assert {:continuar, ^estado} = resultado
+      assert salida =~ "Abandonaste la partida P-1001"
+      assert salida =~ "registrada"
+      assert errores == ""
+    end
+
     test "start_game inicia, la pregunta llega sola y answer se confirma", %{estado: estado} do
       {_, _, _} = ejecutar("create_game tema=historia preguntas=5 tiempo=15", estado)
       {_, _, _} = ejecutar("add_bot facil", estado)

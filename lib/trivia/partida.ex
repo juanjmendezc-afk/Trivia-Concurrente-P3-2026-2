@@ -300,15 +300,17 @@ defmodule Trivia.Partida do
     Puntaje.calcular(pregunta.nivel, resultado, ms_restantes, partida.tiempo)
   end
 
-  # Un jugador abandona. Esperando: si es el creador, la partida se cancela.
+  # Un jugador abandona. Solo el creador puede hacerlo (los bots no son usuarios).
+  # Esperando: la partida se cancela. En curso: queda abandonada y se registra.
   def abandonar(%__MODULE__{estado: :esperando, creador: creador}, creador) do
     {:ok, :cancelada}
   end
 
-  def abandonar(%__MODULE__{estado: :esperando}, _otro_usuario), do: {:error, :sin_partida}
+  def abandonar(%__MODULE__{estado: :en_curso, creador: creador}, creador) do
+    {:ok, :abandonada}
+  end
 
-  # Con la partida en curso el abandono se resuelve en T7
-  def abandonar(_partida, _usuario), do: {:error, :partida_iniciada}
+  def abandonar(_partida, _otro_usuario), do: {:error, :sin_partida}
 
   # ---------- Funciones cliente: solo envían mensajes ----------
 
@@ -344,6 +346,12 @@ defmodule Trivia.Partida do
         # Cancelada: no se registra nada y termina con :normal (no se reinicia)
         avisar_gestor({:partida_terminada, partida.id})
         {:stop, :normal, {:ok, :cancelada}, partida}
+
+      {:ok, :abandonada} ->
+        # En curso: termina ya con los puntajes de las rondas cerradas (la abierta no cuenta).
+        # terminar/1 guarda el historial, avisa a todos y al gestor.
+        partida = terminar(partida)
+        {:stop, :normal, {:ok, :abandonada}, partida}
 
       {:error, motivo} ->
         {:reply, {:error, motivo}, partida}

@@ -92,7 +92,7 @@ defmodule Trivia.GestorPartidasTest do
     end
 
     test "el orden de los errores: ya en partida, parámetros, tema" do
-      estado = GestorPartidas.registrar_partida(estado_con_banco(), "P-1001", self(), "pedro")
+      estado = GestorPartidas.registrar_partida(estado_con_banco(), "P-1001", self(), "pedro", self())
 
       # Ya en partida gana a todo lo demás
       assert {:error, :ya_en_partida} =
@@ -139,7 +139,7 @@ defmodule Trivia.GestorPartidasTest do
       estado = estado_con_banco()
       assert GestorPartidas.id_siguiente(estado) == "P-1001"
 
-      estado = GestorPartidas.registrar_partida(estado, "P-1001", self(), "pedro")
+      estado = GestorPartidas.registrar_partida(estado, "P-1001", self(), "pedro", self())
       assert GestorPartidas.id_siguiente(estado) == "P-1002"
 
       estado = GestorPartidas.liberar(estado, "P-1001")
@@ -148,10 +148,19 @@ defmodule Trivia.GestorPartidasTest do
 
     test "registrar_partida anota al creador y su partida" do
       pid = self()
-      estado = GestorPartidas.registrar_partida(estado_con_banco(), "P-1001", pid, "pedro")
+      receptor = spawn(fn -> :ok end)
+
+      estado =
+        GestorPartidas.registrar_partida(estado_con_banco(), "P-1001", pid, "pedro", receptor)
 
       assert estado.jugadores == %{"pedro" => "P-1001"}
-      assert estado.partidas == %{"P-1001" => %{pid: pid, creador: "pedro"}}
+
+      assert estado.partidas == %{
+               "P-1001" => %{pid: pid, creador: "pedro", receptor: receptor}
+             }
+
+      assert GestorPartidas.receptor_de(estado, "P-1001") == receptor
+      assert GestorPartidas.receptor_de(estado, "P-9999") == nil
       assert {:ok, "P-1001", ^pid} = GestorPartidas.partida_de(estado, "pedro")
     end
 
@@ -159,30 +168,44 @@ defmodule Trivia.GestorPartidasTest do
       assert {:error, :sin_partida} = GestorPartidas.partida_de(estado_con_banco(), "pedro")
     end
 
-    test "registrar_pid actualiza el pid de un id conocido y deja al creador" do
+    test "registrar_pid con otro pid actualiza el pid, deja al creador y avisa del reinicio" do
       viejo = self()
       nuevo = spawn(fn -> :ok end)
-      estado = GestorPartidas.registrar_partida(estado_con_banco(), "P-1001", viejo, "pedro")
+      receptor = spawn(fn -> :ok end)
 
-      estado = GestorPartidas.registrar_pid(estado, "P-1001", nuevo)
+      estado =
+        GestorPartidas.registrar_partida(estado_con_banco(), "P-1001", viejo, "pedro", receptor)
 
-      assert estado.partidas["P-1001"] == %{pid: nuevo, creador: "pedro"}
+      assert {estado, :reinicio} = GestorPartidas.registrar_pid(estado, "P-1001", nuevo)
+
+      assert estado.partidas["P-1001"] == %{pid: nuevo, creador: "pedro", receptor: receptor}
+      assert estado.jugadores == %{"pedro" => "P-1001"}
       assert {:ok, "P-1001", ^nuevo} = GestorPartidas.partida_de(estado, "pedro")
+      assert GestorPartidas.receptor_de(estado, "P-1001") == receptor
     end
 
-    test "registrar_pid de un id desconocido lo registra sin creador" do
+    test "registrar_pid con el mismo pid (primer arranque) no cambia nada" do
       pid = self()
-      estado = GestorPartidas.registrar_pid(estado_con_banco(), "P-1009", pid)
+      estado = GestorPartidas.registrar_partida(estado_con_banco(), "P-1001", pid, "pedro", pid)
 
-      assert estado.partidas == %{"P-1009" => %{pid: pid, creador: nil}}
+      assert {^estado, :sin_cambio} = GestorPartidas.registrar_pid(estado, "P-1001", pid)
+    end
+
+    test "registrar_pid de un id desconocido lo registra sin creador ni aviso" do
+      pid = self()
+
+      assert {estado, :sin_cambio} =
+               GestorPartidas.registrar_pid(estado_con_banco(), "P-1009", pid)
+
+      assert estado.partidas == %{"P-1009" => %{pid: pid, creador: nil, receptor: nil}}
       assert estado.jugadores == %{}
     end
 
     test "liberar suelta a los jugadores de esa partida y no toca las otras" do
       estado =
         estado_con_banco()
-        |> GestorPartidas.registrar_partida("P-1001", self(), "pedro")
-        |> GestorPartidas.registrar_partida("P-1002", self(), "carlos")
+        |> GestorPartidas.registrar_partida("P-1001", self(), "pedro", self())
+        |> GestorPartidas.registrar_partida("P-1002", self(), "carlos", self())
         |> GestorPartidas.liberar("P-1001")
 
       assert estado.jugadores == %{"carlos" => "P-1002"}
@@ -190,7 +213,7 @@ defmodule Trivia.GestorPartidasTest do
     end
 
     test "liberar una partida desconocida no cambia nada" do
-      estado = GestorPartidas.registrar_partida(estado_con_banco(), "P-1001", self(), "pedro")
+      estado = GestorPartidas.registrar_partida(estado_con_banco(), "P-1001", self(), "pedro", self())
 
       assert GestorPartidas.liberar(estado, "P-9999") == estado
     end
@@ -336,6 +359,30 @@ defmodule Trivia.GestorPartidasTest do
       assert {:error, :respuesta_repetida} = GestorPartidas.responder("pedro", "A")
     end
 
+    test "abandonar en curso responde :abandonada, registra la partida y libera al jugador" do
+      {:ok, %{id: "P-1001"}} =
+        GestorPartidas.crear_partida("pedro", "historia", 5, 15, receptor())
+
+      {:ok, "bot_1"} = GestorPartidas.agregar_bot("pedro", :facil)
+      {:ok, "bot_2"} = GestorPartidas.agregar_bot("pedro", :facil)
+      {:ok, %{id: "P-1001"}} = GestorPartidas.iniciar_partida("pedro")
+      assert_receive {:pregunta, %{numero: 1}}, 1000
+
+      assert {:ok, %{id: "P-1001", resultado: :abandonada}} = GestorPartidas.abandonar("pedro")
+
+      assert_receive {:fin_partida, %{id: "P-1001", ranking: ranking}}
+      assert length(ranking) == 3
+      assert {:ok, [linea]} = Persistencia.leer_historial()
+      assert linea =~ "|P-1001|historia|basico|"
+      assert linea =~ "pedro:0,bot_1:0,bot_2:0"
+
+      assert {:error, :sin_partida} = GestorPartidas.agregar_bot("pedro", :facil)
+      assert {:error, :sin_partida} = GestorPartidas.abandonar("pedro")
+
+      assert {:ok, %{id: "P-1002"}} =
+               GestorPartidas.crear_partida("pedro", "historia", 5, 15, receptor())
+    end
+
     test "dos jugadores con partidas distintas no se interfieren" do
       {:ok, %{id: "P-1001"}} =
         GestorPartidas.crear_partida("pedro", "historia", 5, 15, receptor())
@@ -368,6 +415,90 @@ defmodule Trivia.GestorPartidasTest do
 
       assert {:error, :ya_en_partida} =
                GestorPartidas.crear_partida("pedro", "ciencia", 5, 15, receptor())
+    end
+
+    test "al crear una partida no hay aviso de reinicio (el pid es el mismo)" do
+      {:ok, _} = GestorPartidas.crear_partida("pedro", "historia", 5, 15, receptor())
+
+      # Esta petición vuelve después de que el gestor atendió el {:partida_iniciada, ...}
+      {:ok, "bot_1"} = GestorPartidas.agregar_bot("pedro", :facil)
+
+      refute_received {:aviso, _}
+    end
+
+    test "matar una partida en curso: reinicia en espera, avisa al creador y todo sigue" do
+      {:ok, %{id: "P-1001"}} =
+        GestorPartidas.crear_partida("pedro", "historia", 5, 15, receptor())
+
+      {:ok, "bot_1"} = GestorPartidas.agregar_bot("pedro", :facil)
+      {:ok, "bot_2"} = GestorPartidas.agregar_bot("pedro", :dificil)
+      {:ok, _} = GestorPartidas.iniciar_partida("pedro")
+      assert_receive {:pregunta, %{numero: 1}}, 1000
+
+      [{:undefined, viejo, :worker, _}] = DynamicSupervisor.which_children(:supervisor_partidas)
+      bots = Enum.map(:sys.get_state(viejo).bots, fn bot -> bot.pid end)
+      monitores = Enum.map([viejo | bots], &Process.monitor/1)
+
+      Process.exit(viejo, :kill)
+
+      # El creador recibe el aviso, y los bots mueren con la partida (estaban enlazados)
+      assert_receive {:aviso, "Tu partida falló y se reinició sin progreso." <> _ = aviso}, 1000
+      assert aviso =~ "Agrega bots y ejecuta start_game."
+
+      for monitor <- monitores do
+        assert_receive {:DOWN, ^monitor, :process, _pid, _motivo}, 1000
+      end
+
+      # La partida nueva: otro pid, en espera, solo el creador, sin bots ni puntajes
+      [{:undefined, nuevo, :worker, _}] = DynamicSupervisor.which_children(:supervisor_partidas)
+      assert nuevo != viejo
+
+      assert %Trivia.Partida{
+               id: "P-1001",
+               creador: "pedro",
+               estado: :esperando,
+               bots: [],
+               puntajes: %{},
+               ronda: nil,
+               preguntas: []
+             } = :sys.get_state(nuevo)
+
+      # No se escribió nada en el historial y el creador sigue «en partida»
+      assert {:ok, []} = Persistencia.leer_historial()
+
+      assert {:error, :ya_en_partida} =
+               GestorPartidas.crear_partida("pedro", "ciencia", 5, 15, receptor())
+
+      # Puede agregar bots y empezar de nuevo
+      assert {:error, :bots_insuficientes} = GestorPartidas.iniciar_partida("pedro")
+      assert {:ok, "bot_1"} = GestorPartidas.agregar_bot("pedro", :facil)
+      assert {:ok, "bot_2"} = GestorPartidas.agregar_bot("pedro", :facil)
+      assert {:ok, %{id: "P-1001", total: 5}} = GestorPartidas.iniciar_partida("pedro")
+      assert_receive {:pregunta, %{numero: 1}}, 1000
+    end
+
+    test "matar la partida de uno no toca la de otro" do
+      {:ok, %{id: "P-1001"}} =
+        GestorPartidas.crear_partida("pedro", "historia", 5, 15, receptor())
+
+      {:ok, %{id: "P-1002"}} =
+        GestorPartidas.crear_partida("carlos", "ciencia", 5, 15, receptor())
+
+      {:ok, "bot_1"} = GestorPartidas.agregar_bot("carlos", :facil)
+
+      [{_, p1, _, _}, {_, p2, _, _}] = DynamicSupervisor.which_children(:supervisor_partidas)
+
+      de_pedro =
+        Enum.find([p1, p2], fn pid -> :sys.get_state(pid).creador == "pedro" end)
+
+      de_carlos = if de_pedro == p1, do: p2, else: p1
+
+      Process.exit(de_pedro, :kill)
+      assert_receive {:aviso, _}, 1000
+
+      # La de carlos conserva su bot
+      assert Process.alive?(de_carlos)
+      assert [%{nombre: "bot_1"}] = :sys.get_state(de_carlos).bots
     end
 
     test "un mensaje desconocido no tumba al gestor" do

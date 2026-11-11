@@ -188,6 +188,11 @@ defmodule Trivia.Cliente do
     estado
   end
 
+  defp mostrar({:leave_game, _}, {:ok, %{id: id, resultado: :abandonada}}, estado) do
+    Util.imprimir("Abandonaste la partida #{id}: terminó y quedó registrada con los puntajes actuales")
+    estado
+  end
+
   # Comandos que aún no tienen su formato propio (T9)
   defp mostrar(_mensaje, {:ok, datos}, estado) do
     Util.imprimir(inspect(datos))
