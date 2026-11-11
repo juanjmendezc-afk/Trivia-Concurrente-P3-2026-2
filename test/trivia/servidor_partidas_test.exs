@@ -57,6 +57,72 @@ defmodule Trivia.ServidorPartidasTest do
       assert {:error, :sin_sesion} = crear(cliente)
       assert {:error, :sin_sesion} = peticion(cliente, {:add_bot, cliente, :facil})
       assert {:error, :sin_sesion} = peticion(cliente, {:leave_game, cliente})
+      assert {:error, :sin_sesion} = peticion(cliente, {:start_game, cliente})
+      assert {:error, :sin_sesion} = peticion(cliente, {:answer, cliente, "A"})
+    end
+  end
+
+  describe "start_game y answer" do
+    test "sin partida" do
+      pedro = conectar("pedro")
+
+      assert {:error, :sin_partida} = peticion(pedro, {:start_game, pedro})
+      assert {:error, :sin_partida} = peticion(pedro, {:answer, pedro, "A"})
+    end
+
+    test "con menos de 2 bots no inicia y no hay ronda para responder" do
+      pedro = conectar("pedro")
+      {:ok, _} = crear(pedro)
+      {:ok, "bot_1"} = peticion(pedro, {:add_bot, pedro, :facil})
+
+      assert {:error, :bots_insuficientes} = peticion(pedro, {:start_game, pedro})
+      assert {:error, :sin_ronda_abierta} = peticion(pedro, {:answer, pedro, "A"})
+    end
+
+    test "inicia, la pregunta llega sola al receptor y se valida la respuesta" do
+      pedro = conectar("pedro")
+      {:ok, _} = crear(pedro)
+      {:ok, _} = peticion(pedro, {:add_bot, pedro, :facil})
+      {:ok, _} = peticion(pedro, {:add_bot, pedro, :facil})
+
+      assert {:ok, %{id: "P-1001", total: 5}} = peticion(pedro, {:start_game, pedro})
+
+      # El cliente falso también es el receptor de la partida
+      assert_receive {:recibido, ^pedro, {:pregunta, pregunta}}, 1000
+      assert %{numero: 1, total: 5, tiempo: 15} = pregunta
+      refute Map.has_key?(pregunta, :respuesta)
+      refute Map.has_key?(pregunta, :nivel)
+
+      assert {:error, :partida_iniciada} = peticion(pedro, {:start_game, pedro})
+      assert {:error, :partida_iniciada} = peticion(pedro, {:add_bot, pedro, :facil})
+
+      assert {:error, :letra_invalida} = peticion(pedro, {:answer, pedro, "Z"})
+      assert {:error, :letra_invalida} = peticion(pedro, {:answer, pedro, :a})
+      assert {:ok, :recibida} = peticion(pedro, {:answer, pedro, "C"})
+      assert {:error, :respuesta_repetida} = peticion(pedro, {:answer, pedro, "A"})
+    end
+
+    test "dos partidas a la vez: cada receptor recibe solo su pregunta" do
+      pedro = conectar("pedro")
+      carlos = conectar("carlos")
+      {:ok, _} = crear(pedro, "historia", 5, 15)
+      {:ok, _} = crear(carlos, "ciencia", 3, 20)
+
+      for cliente <- [pedro, carlos], _ <- 1..2 do
+        {:ok, _} = peticion(cliente, {:add_bot, cliente, :facil})
+      end
+
+      assert {:ok, %{id: "P-1001", total: 5}} = peticion(pedro, {:start_game, pedro})
+      assert {:ok, %{id: "P-1002", total: 3}} = peticion(carlos, {:start_game, carlos})
+
+      assert_receive {:recibido, ^pedro, {:pregunta, %{total: 5, tiempo: 15} = de_pedro}}, 1000
+      assert_receive {:recibido, ^carlos, {:pregunta, %{total: 3, tiempo: 20} = de_carlos}}, 1000
+      assert de_pedro.enunciado =~ "historia"
+      assert de_carlos.enunciado =~ "ciencia"
+
+      # La respuesta de uno no cuenta en la partida del otro
+      assert {:ok, :recibida} = peticion(pedro, {:answer, pedro, "A"})
+      assert {:ok, :recibida} = peticion(carlos, {:answer, carlos, "B"})
     end
   end
 

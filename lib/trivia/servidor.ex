@@ -126,6 +126,14 @@ defmodule Trivia.Servidor do
         atender(pid_cliente, &GestorPartidas.abandonar/1)
         loop(monitores)
 
+      {:start_game, pid_cliente} when is_pid(pid_cliente) ->
+        atender(pid_cliente, &GestorPartidas.iniciar_partida/1)
+        loop(monitores)
+
+      {:answer, pid_cliente, letra} when is_pid(pid_cliente) ->
+        atender(pid_cliente, fn usuario -> GestorPartidas.responder(usuario, letra) end)
+        loop(monitores)
+
       # Cualquier otra petición {accion, pid_cliente, ...}
       peticion when is_tuple(peticion) and tuple_size(peticion) >= 2 and is_pid(elem(peticion, 1)) ->
         pid_cliente = elem(peticion, 1)

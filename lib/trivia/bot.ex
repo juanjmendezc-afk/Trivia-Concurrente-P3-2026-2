@@ -32,6 +32,55 @@ defmodule Trivia.Bot do
     {:error, :argumentos_invalidos}
   end
 
+  # ---------- Proceso del bot (T6) ----------
+
+  # Arranca el bot enlazado a quien lo crea (la partida) y devuelve su pid
+  def iniciar(nombre, dificultad, pid_partida) do
+    bot = %{nombre: nombre, dificultad: dificultad, partida: pid_partida}
+    spawn_link(fn -> loop(bot, 0) end)
+  end
+
+  # `ronda` es el número de la última pregunta recibida
+  defp loop(bot, ronda) do
+    receive do
+      # La misma notificación que recibe un cliente
+      {:pregunta, datos} ->
+        loop(bot, programar_respuesta(bot, datos, ronda))
+
+      # El pin descarta una respuesta programada para una ronda que ya pasó
+      {:responder, ^ronda, letra} ->
+        responder(bot, letra)
+        loop(bot, ronda)
+
+      # La partida terminó: el bot deja su bucle
+      {:fin_partida, _datos} ->
+        :ok
+
+      _otro ->
+        loop(bot, ronda)
+    end
+  end
+
+  # Pide a su partida el nivel y la respuesta, decide y programa el envío.
+  # Devuelve el número de la ronda que quedó pendiente de responder.
+  defp programar_respuesta(bot, datos, ronda) do
+    with {:ok, %{numero: numero, nivel: nivel, respuesta: correcta}} <-
+           Trivia.Partida.datos_pregunta(bot.partida),
+         {letra, retardo_ms} <- decidir(bot.dificultad, nivel, correcta, datos.tiempo) do
+      Process.send_after(self(), {:responder, numero, letra}, retardo_ms)
+      numero
+    else
+      {:error, _motivo} -> ronda
+    end
+  end
+
+  # Responde por el mismo mensaje que un humano, sin camino especial
+  defp responder(bot, letra) do
+    if Process.alive?(bot.partida) do
+      GenServer.call(bot.partida, {:responder, bot.nombre, letra})
+    end
+  end
+
   defp probabilidad_acierto(:facil, :basico), do: 40
   defp probabilidad_acierto(:facil, :intermedio), do: 30
   defp probabilidad_acierto(:facil, :avanzado), do: 20
