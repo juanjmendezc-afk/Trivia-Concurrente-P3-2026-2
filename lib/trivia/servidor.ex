@@ -1,6 +1,8 @@
 defmodule Trivia.Servidor do
   alias Trivia.GestorJugadores
+  alias Trivia.GestorPartidas
   alias Trivia.Persistencia
+  alias Trivia.SupervisorPartidas
   alias Trivia.Util
 
   @nombre :servidor
@@ -48,9 +50,16 @@ defmodule Trivia.Servidor do
         end
     end
 
+    detener_gestores()
+    :ok
+  end
+
+  # Detiene en orden inverso al arranque lo que haya en marcha (las partidas mueren con su supervisor)
+  defp detener_gestores do
+    GestorPartidas.detener()
+    SupervisorPartidas.detener()
     GestorJugadores.detener()
     Persistencia.detener()
-    :ok
   end
 
   defp arrancar(carpeta) do
@@ -60,7 +69,8 @@ defmodule Trivia.Servidor do
           {:ok, pid}
 
         {:error, motivo} ->
-          Persistencia.detener()
+          # Si algo falló a medias no se deja nada en marcha
+          detener_gestores()
           {:error, motivo}
       end
     end
@@ -68,7 +78,9 @@ defmodule Trivia.Servidor do
 
   defp arrancar_servidor do
     with {:ok, usuarios} <- Persistencia.cargar_usuarios(),
-         {:ok, _pid} <- GestorJugadores.iniciar(usuarios) do
+         {:ok, _pid} <- GestorJugadores.iniciar(usuarios),
+         {:ok, _pid} <- SupervisorPartidas.iniciar(),
+         {:ok, _pid} <- GestorPartidas.iniciar() do
       pid = spawn(fn -> loop(%{}) end)
       Process.register(pid, @nombre)
       {:ok, pid}
@@ -98,6 +110,22 @@ defmodule Trivia.Servidor do
         Process.unregister(@nombre)
         send(remitente, {:detener_servidor, :ok})
 
+      # Peticiones de partida: exigen sesión y se pasan a GestorPartidas con el usuario
+      {:create_game, pid_cliente, tema, preguntas, tiempo, receptor} when is_pid(pid_cliente) ->
+        atender(pid_cliente, fn usuario ->
+          GestorPartidas.crear_partida(usuario, tema, preguntas, tiempo, receptor)
+        end)
+
+        loop(monitores)
+
+      {:add_bot, pid_cliente, dificultad} when is_pid(pid_cliente) ->
+        atender(pid_cliente, fn usuario -> GestorPartidas.agregar_bot(usuario, dificultad) end)
+        loop(monitores)
+
+      {:leave_game, pid_cliente} when is_pid(pid_cliente) ->
+        atender(pid_cliente, &GestorPartidas.abandonar/1)
+        loop(monitores)
+
       # Cualquier otra petición {accion, pid_cliente, ...}
       peticion when is_tuple(peticion) and tuple_size(peticion) >= 2 and is_pid(elem(peticion, 1)) ->
         pid_cliente = elem(peticion, 1)
@@ -112,6 +140,16 @@ defmodule Trivia.Servidor do
 
   defp responder(pid_cliente, respuesta) do
     send(pid_cliente, {:respuesta, respuesta})
+  end
+
+  # Identifica al usuario por el pid del cliente y ejecuta la acción con su nombre
+  defp atender(pid_cliente, accion) do
+    respuesta =
+      with {:ok, usuario} <- GestorJugadores.usuario_de(pid_cliente) do
+        accion.(usuario)
+      end
+
+    responder(pid_cliente, respuesta)
   end
 
   # Punto único para cerrar una sesión; en T7 aquí se aplicará la regla de abandono

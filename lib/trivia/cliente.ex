@@ -154,7 +154,31 @@ defmodule Trivia.Cliente do
     %{estado | usuario: nil}
   end
 
-  # Comandos que aún no tienen su formato propio (T5, T6 y T9)
+  defp mostrar(
+         {:create_game, _, tema, preguntas, tiempo, _},
+         {:ok, %{id: id, nivel: nivel}},
+         estado
+       ) do
+    Util.imprimir(
+      "Partida #{id} creada: tema #{tema}, #{preguntas} preguntas, #{tiempo} s por pregunta"
+    )
+
+    Util.imprimir("Tu nivel en #{tema}: #{nombre_nivel(nivel)}")
+    Util.imprimir("Agrega al menos 2 bots con add_bot <facil|dificil> y luego usa start_game")
+    estado
+  end
+
+  defp mostrar({:add_bot, _, dificultad}, {:ok, nombre}, estado) when is_binary(nombre) do
+    Util.imprimir("Bot agregado: #{nombre} (#{dificultad})")
+    estado
+  end
+
+  defp mostrar({:leave_game, _}, {:ok, %{id: id, resultado: :cancelada}}, estado) do
+    Util.imprimir("Saliste de la partida #{id}: quedó cancelada y no se registra en el historial")
+    estado
+  end
+
+  # Comandos que aún no tienen su formato propio (T6 y T9)
   defp mostrar(_mensaje, {:ok, datos}, estado) do
     Util.imprimir(inspect(datos))
     estado
@@ -234,6 +258,11 @@ defmodule Trivia.Cliente do
       _ -> {:error, :parametros_invalidos}
     end
   end
+
+  # Nombre del nivel para mostrarlo al jugador
+  defp nombre_nivel(:basico), do: "básico"
+  defp nombre_nivel(:intermedio), do: "intermedio"
+  defp nombre_nivel(:avanzado), do: "avanzado"
 
   # ---------- Lógica pura: mensajes de error (sección 6) ----------
 

@@ -341,6 +341,97 @@ defmodule Trivia.ClienteTest do
     end
   end
 
+  describe "procesar/2 con partidas" do
+    @describetag :tmp_dir
+
+    setup %{tmp_dir: carpeta} do
+      Trivia.AyudaPruebas.escribir_preguntas(carpeta)
+      {:ok, _pid} = Servidor.iniciar(carpeta)
+      on_exit(fn -> Servidor.detener() end)
+
+      {resultado, _, _} =
+        ejecutar("connect pedro 1234", %{nodo: node(), receptor: self(), usuario: nil})
+
+      assert {:continuar, estado} = resultado
+      %{estado: estado}
+    end
+
+    test "create_game muestra el id, el tema y el nivel", %{estado: estado} do
+      {resultado, salida, errores} =
+        ejecutar("create_game tema=historia preguntas=5 tiempo=15", estado)
+
+      assert {:continuar, ^estado} = resultado
+      assert salida =~ "Partida P-1001 creada: tema historia, 5 preguntas, 15 s por pregunta"
+      assert salida =~ "Tu nivel en historia: básico"
+      assert salida =~ "add_bot"
+      assert errores == ""
+    end
+
+    test "add_bot muestra el nombre y la dificultad del bot", %{estado: estado} do
+      {_, _, _} = ejecutar("create_game tema=historia preguntas=5 tiempo=15", estado)
+
+      {_, salida, errores} = ejecutar("add_bot facil", estado)
+      assert salida =~ "Bot agregado: bot_1 (facil)"
+      assert errores == ""
+
+      {_, salida, _} = ejecutar("add_bot dificil", estado)
+      assert salida =~ "Bot agregado: bot_2 (dificil)"
+    end
+
+    test "el cuarto bot da partida llena", %{estado: estado} do
+      {_, _, _} = ejecutar("create_game tema=historia preguntas=5 tiempo=15", estado)
+      for _ <- 1..3, do: ejecutar("add_bot facil", estado)
+
+      {resultado, salida, errores} = ejecutar("add_bot facil", estado)
+
+      assert {:continuar, ^estado} = resultado
+      assert salida == ""
+      assert errores =~ "La partida está llena"
+    end
+
+    test "leave_game cancela la partida y permite crear otra", %{estado: estado} do
+      {_, _, _} = ejecutar("create_game tema=historia preguntas=5 tiempo=15", estado)
+
+      {resultado, salida, errores} = ejecutar("leave_game", estado)
+      assert {:continuar, ^estado} = resultado
+      assert salida =~ "Saliste de la partida P-1001: quedó cancelada"
+      assert errores == ""
+
+      {_, salida, _} = ejecutar("create_game tema=ciencia preguntas=10 tiempo=20", estado)
+      assert salida =~ "Partida P-1002 creada: tema ciencia, 10 preguntas, 20 s por pregunta"
+    end
+
+    test "los errores de partida se traducen", %{estado: estado} do
+      {_, _, errores} = ejecutar("add_bot facil", estado)
+      assert errores =~ "No estás en ninguna partida"
+
+      {_, _, errores} = ejecutar("leave_game", estado)
+      assert errores =~ "No estás en ninguna partida"
+
+      {_, _, errores} = ejecutar("create_game tema=cocina preguntas=5 tiempo=15", estado)
+      assert errores =~ "Ese tema no existe"
+
+      {_, _, errores} = ejecutar("create_game tema=escaso preguntas=5 tiempo=15", estado)
+      assert errores =~ "No hay preguntas suficientes"
+
+      {_, _, errores} = ejecutar("create_game tema=historia preguntas=11 tiempo=15", estado)
+      assert errores =~ "Revisa los parámetros"
+
+      {_, _, errores} = ejecutar("create_game tema=historia preguntas=5 tiempo=0", estado)
+      assert errores =~ "Revisa los parámetros"
+
+      {_, _, _} = ejecutar("create_game tema=historia preguntas=5 tiempo=15", estado)
+      {_, _, errores} = ejecutar("create_game tema=ciencia preguntas=5 tiempo=15", estado)
+      assert errores =~ "Ya estás en una partida"
+    end
+
+    test "start_game aún no está implementado (T6)", %{estado: estado} do
+      {_, _, errores} = ejecutar("start_game", estado)
+
+      assert errores =~ "Comando no reconocido"
+    end
+  end
+
   describe "pedir/3" do
     @describetag :tmp_dir
 

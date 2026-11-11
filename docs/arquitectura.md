@@ -198,6 +198,7 @@ El cliente envía a `{:servidor, nodo_servidor}` y espera con `receive ... after
 - `connect` → `{:ok, %{usuario: "pedro", registrado: true}}` (`registrado: false` si el usuario ya existía)
 - `disconnect` → `{:ok, %{usuario: "pedro"}}`
 - `add_bot` → `{:ok, "bot_1"}`
+- `leave_game` → `{:ok, %{id: "P-1001", resultado: :cancelada}}` (T5; `resultado` permitirá a T7 distinguir la cancelada de la abandonada en curso)
 - `score` → `{:ok, %{puntaje: 120, partidas: 6, por_tema: %{"historia" => %{puntaje: 75, nivel: :intermedio}}}}`
 
 ### ② Servidor → resto del servidor (interno)
