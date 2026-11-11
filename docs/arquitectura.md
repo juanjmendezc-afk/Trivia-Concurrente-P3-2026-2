@@ -90,7 +90,7 @@ Todos los módulos van en `lib/trivia/` con el prefijo `Trivia.` (por ejemplo `l
 
 | Módulo | Tipo | Responsabilidad |
 |---|---|---|
-| `Cliente` | Proceso | `iniciar/0`: se conecta al nodo servidor, arranca el Receptor y entra al bucle leer comando → enviar → mostrar respuesta. |
+| `Cliente` | Proceso | `iniciar/0`: se conecta al nodo servidor (`servidor@<mismo equipo>`; `iniciar/1` recibe el nodo), arranca el Receptor y entra al bucle leer comando → enviar → mostrar respuesta. `salir` (comando local) cierra el bucle y, si hay sesión, envía `disconnect` antes. |
 | `Receptor` | Proceso | Bucle `receive` que imprime las notificaciones (preguntas, cierre de ronda, ranking final, avisos). |
 | `Util` | Lógica pura | `leer` e `imprimir` como en la guía 06; errores por la salida de errores. |
 
@@ -325,6 +325,7 @@ El servidor responde `{:error, :atomo}`. El **cliente** traduce el átomo a text
 | extra | `:sesion_abierta` | Ya tienes una sesión abierta; usa disconnect antes de conectar otro usuario |
 | extra | `:comando_invalido` | Comando no reconocido |
 | extra | `:parametros_invalidos` | Revisa los parámetros del comando (por ejemplo, usuario sin espacios, barras verticales, comas ni dos puntos; preguntas de 1 a 10 o tiempo mayor a 0) |
+| extra (solo cliente) | `:nodo_sin_nombre` | Este nodo no tiene nombre. Arranca con: iex --sname <nombre> -S mix |
 
 ---
 
