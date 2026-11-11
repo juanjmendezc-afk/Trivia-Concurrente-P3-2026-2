@@ -160,8 +160,14 @@ defmodule Trivia.Servidor do
     responder(pid_cliente, respuesta)
   end
 
-  # Punto único para cerrar una sesión; en T7 aquí se aplicará la regla de abandono
+  # Punto único para cerrar una sesión (disconnect o cliente caído).
+  # Si el usuario está en una partida, primero se aplica la regla de abandono.
   defp cerrar_sesion(pid_cliente) do
+    with {:ok, usuario} <- GestorJugadores.usuario_de(pid_cliente) do
+      # Sin partida (o con cualquier otro error) la sesión se cierra igual
+      _resultado = GestorPartidas.abandonar(usuario)
+    end
+
     GestorJugadores.desconectar(pid_cliente)
   end
 

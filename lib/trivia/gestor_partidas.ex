@@ -47,24 +47,41 @@ defmodule Trivia.GestorPartidas do
     end
   end
 
-  # Anota la partida nueva y deja listo el id siguiente
-  def registrar_partida(estado, id, pid, creador) do
+  # Anota la partida nueva (con el receptor del creador, para avisarle si se reinicia)
+  # y deja listo el id siguiente
+  def registrar_partida(estado, id, pid, creador, receptor) do
     %{
       estado
       | siguiente: estado.siguiente + 1,
         jugadores: Map.put(estado.jugadores, creador, id),
-        partidas: Map.put(estado.partidas, id, %{pid: pid, creador: creador})
+        partidas: Map.put(estado.partidas, id, %{pid: pid, creador: creador, receptor: receptor})
     }
   end
 
-  # Aviso {:partida_iniciada, id, pid}: registra el pid o lo actualiza si el id ya existía
+  # Aviso {:partida_iniciada, id, pid}. Devuelve el estado y si hubo reinicio:
+  #   :reinicio   el id ya existía con otro pid (el supervisor la levantó de nuevo)
+  #   :sin_cambio primer arranque (mismo pid) o id desconocido
   def registrar_pid(estado, id, pid) do
-    partidas =
-      Map.update(estado.partidas, id, %{pid: pid, creador: nil}, fn partida ->
-        %{partida | pid: pid}
-      end)
+    case Map.fetch(estado.partidas, id) do
+      {:ok, %{pid: ^pid}} ->
+        {estado, :sin_cambio}
 
-    %{estado | partidas: partidas}
+      {:ok, partida} ->
+        partidas = Map.put(estado.partidas, id, %{partida | pid: pid})
+        {%{estado | partidas: partidas}, :reinicio}
+
+      :error ->
+        partidas = Map.put(estado.partidas, id, %{pid: pid, creador: nil, receptor: nil})
+        {%{estado | partidas: partidas}, :sin_cambio}
+    end
+  end
+
+  # Receptor del creador de una partida (nil si no se conoce)
+  def receptor_de(estado, id) do
+    case Map.fetch(estado.partidas, id) do
+      {:ok, %{receptor: receptor}} -> receptor
+      :error -> nil
+    end
   end
 
   # La partida terminó: se olvida y sus jugadores quedan libres
@@ -174,9 +191,11 @@ defmodule Trivia.GestorPartidas do
         send(remitente, {:responder, responder_en(estado, usuario, letra)})
         loop(estado)
 
-      # La Partida avisa al arrancar (y al reiniciarse). El aviso de reinicio es T8.
+      # La Partida avisa al arrancar (y al reiniciarse). Si es un reinicio, se avisa al creador.
       {:partida_iniciada, id, pid} ->
-        loop(registrar_pid(estado, id, pid))
+        {estado, que_paso} = registrar_pid(estado, id, pid)
+        avisar_reinicio(que_paso, receptor_de(estado, id))
+        loop(estado)
 
       {:partida_terminada, id} ->
         loop(liberar(estado, id))
@@ -210,11 +229,21 @@ defmodule Trivia.GestorPartidas do
            receptor: receptor
          },
          {:ok, pid} <- SupervisorPartidas.crear_partida(argumentos) do
-      {{:ok, %{id: id, nivel: nivel}}, registrar_partida(estado, id, pid, usuario)}
+      {{:ok, %{id: id, nivel: nivel}}, registrar_partida(estado, id, pid, usuario, receptor)}
     else
       {:error, motivo} -> {{:error, motivo}, estado}
     end
   end
+
+  # Solo send: el gestor nunca espera al Receptor
+  defp avisar_reinicio(:reinicio, receptor) when is_pid(receptor) do
+    send(
+      receptor,
+      {:aviso, "Tu partida falló y se reinició sin progreso. Agrega bots y ejecuta start_game."}
+    )
+  end
+
+  defp avisar_reinicio(_que_paso, _receptor), do: :ok
 
   # PROVISIONAL (T5): Estadisticas (P5) aún no existe, así que se usa un puntaje fijo.
   # Cuando exista: leer el historial con Persistencia.leer_historial/0 y sumar el
@@ -229,8 +258,9 @@ defmodule Trivia.GestorPartidas do
 
   defp abandonar_en(estado, usuario) do
     with {:ok, id, pid} <- partida_viva(estado, usuario),
-         {:ok, :cancelada} <- GenServer.call(pid, {:abandonar, usuario}) do
-      {:ok, %{id: id, resultado: :cancelada}}
+         {:ok, resultado} <- GenServer.call(pid, {:abandonar, usuario}) do
+      # resultado es :cancelada (en espera) o :abandonada (en curso)
+      {:ok, %{id: id, resultado: resultado}}
     end
   end
 

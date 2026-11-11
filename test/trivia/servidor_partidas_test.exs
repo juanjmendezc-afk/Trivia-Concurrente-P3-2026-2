@@ -208,6 +208,162 @@ defmodule Trivia.ServidorPartidasTest do
     end
   end
 
+  describe "abandono y desconexión" do
+    alias Trivia.Persistencia
+
+    # Crea la partida con 2 bots, la inicia y espera la primera pregunta
+    defp en_curso(cliente, tema \\ "historia") do
+      {:ok, %{id: id}} = crear(cliente, tema)
+      {:ok, _} = peticion(cliente, {:add_bot, cliente, :facil})
+      {:ok, _} = peticion(cliente, {:add_bot, cliente, :facil})
+      {:ok, _} = peticion(cliente, {:start_game, cliente})
+      assert_receive {:recibido, ^cliente, {:pregunta, %{numero: 1}}}, 1000
+      id
+    end
+
+    defp lineas_del_historial do
+      {:ok, lineas} = Persistencia.leer_historial()
+      lineas
+    end
+
+    # Sin dormir: reintenta conectar hasta que el servidor ya cerró la sesión vieja
+    defp conectar_cuando_libre(usuario, limite \\ System.monotonic_time(:millisecond) + 2000) do
+      cliente = cliente_falso()
+
+      case peticion(cliente, {:connect, cliente, usuario, "1234"}) do
+        {:ok, _datos} ->
+          cliente
+
+        {:error, :ya_conectado} ->
+          if System.monotonic_time(:millisecond) < limite do
+            conectar_cuando_libre(usuario, limite)
+          else
+            flunk("la sesión de #{usuario} no se cerró")
+          end
+      end
+    end
+
+    test "leave_game en curso responde :abandonada, registra la partida y libera al jugador" do
+      pedro = conectar("pedro")
+      id = en_curso(pedro)
+
+      assert {:ok, %{id: ^id, resultado: :abandonada}} = peticion(pedro, {:leave_game, pedro})
+
+      assert_receive {:recibido, ^pedro, {:fin_partida, %{id: ^id, ranking: ranking}}}
+      assert [_, _, _] = ranking
+      assert [linea] = lineas_del_historial()
+      assert linea =~ "|P-1001|historia|basico|"
+      assert linea =~ "pedro:0,bot_1:0,bot_2:0"
+
+      # Sigue conectado y puede crear otra partida
+      assert {:error, :sin_partida} = peticion(pedro, {:leave_game, pedro})
+      assert {:ok, %{id: "P-1002"}} = crear(pedro)
+    end
+
+    test "disconnect en curso termina la partida, la registra y libera al usuario" do
+      pedro = conectar("pedro")
+      en_curso(pedro)
+
+      assert {:ok, %{usuario: "pedro"}} = peticion(pedro, {:disconnect, pedro})
+
+      assert_receive {:recibido, ^pedro, {:fin_partida, %{id: "P-1001"}}}
+      assert [linea] = lineas_del_historial()
+      assert linea =~ "|P-1001|historia|basico|"
+
+      # Al volver a conectar no queda atrapado en la partida vieja
+      pedro_2 = conectar("pedro")
+      assert {:error, :sin_partida} = peticion(pedro_2, {:add_bot, pedro_2, :facil})
+      assert {:ok, %{id: "P-1002"}} = crear(pedro_2)
+    end
+
+    test "disconnect en espera cancela la partida y no registra nada" do
+      pedro = conectar("pedro")
+      {:ok, %{id: "P-1001"}} = crear(pedro)
+      {:ok, _} = peticion(pedro, {:add_bot, pedro, :facil})
+
+      assert {:ok, %{usuario: "pedro"}} = peticion(pedro, {:disconnect, pedro})
+
+      assert [] = lineas_del_historial()
+      refute_received {:recibido, ^pedro, {:fin_partida, _}}
+
+      pedro_2 = conectar("pedro")
+      assert {:ok, %{id: "P-1002"}} = crear(pedro_2)
+    end
+
+    test "disconnect sin partida sigue funcionando" do
+      pedro = conectar("pedro")
+
+      assert {:ok, %{usuario: "pedro"}} = peticion(pedro, {:disconnect, pedro})
+      assert [] = lineas_del_historial()
+    end
+
+    test "si el cliente se cierra en plena partida, la partida termina y se registra" do
+      pedro = conectar("pedro")
+      en_curso(pedro)
+      servidor = Process.whereis(:servidor)
+      referencia = Process.monitor(pedro)
+
+      Process.exit(pedro, :kill)
+      assert_receive {:DOWN, ^referencia, :process, ^pedro, :killed}
+
+      # El usuario queda libre: otro cliente puede entrar con ese nombre y crear partida
+      pedro_2 = conectar_cuando_libre("pedro")
+      assert {:ok, %{id: "P-1002"}} = crear(pedro_2)
+
+      assert [linea] = lineas_del_historial()
+      assert linea =~ "|P-1001|historia|basico|"
+      assert Process.whereis(:servidor) == servidor
+    end
+
+    test "si el cliente se cierra con la partida en espera, se cancela sin registrar" do
+      pedro = conectar("pedro")
+      {:ok, %{id: "P-1001"}} = crear(pedro)
+      referencia = Process.monitor(pedro)
+
+      Process.exit(pedro, :kill)
+      assert_receive {:DOWN, ^referencia, :process, ^pedro, :killed}
+
+      pedro_2 = conectar_cuando_libre("pedro")
+      assert {:ok, %{id: "P-1002"}} = crear(pedro_2)
+      assert [] = lineas_del_historial()
+    end
+
+    test "si se mata la partida en curso, el cliente recibe el aviso y puede empezar de nuevo" do
+      pedro = conectar("pedro")
+      en_curso(pedro)
+      [{:undefined, partida, :worker, _}] = DynamicSupervisor.which_children(:supervisor_partidas)
+
+      Process.exit(partida, :kill)
+
+      assert_receive {:recibido, ^pedro, {:aviso, "Tu partida falló y se reinició" <> _}}, 1000
+      assert [] = lineas_del_historial()
+
+      # Sigue en su partida (ya en espera): vuelve a agregar bots e iniciar
+      assert {:error, :ya_en_partida} = crear(pedro)
+      assert {:error, :bots_insuficientes} = peticion(pedro, {:start_game, pedro})
+      assert {:ok, "bot_1"} = peticion(pedro, {:add_bot, pedro, :facil})
+      assert {:ok, "bot_2"} = peticion(pedro, {:add_bot, pedro, :facil})
+      assert {:ok, %{id: "P-1001"}} = peticion(pedro, {:start_game, pedro})
+      assert_receive {:recibido, ^pedro, {:pregunta, %{numero: 1}}}, 1000
+    end
+
+    test "cerrar un cliente no afecta la partida de otro" do
+      pedro = conectar("pedro")
+      carlos = conectar("carlos")
+      en_curso(pedro)
+      en_curso(carlos, "ciencia")
+
+      assert {:ok, %{usuario: "pedro"}} = peticion(pedro, {:disconnect, pedro})
+      assert_receive {:recibido, ^pedro, {:fin_partida, %{id: "P-1001"}}}
+
+      # La de carlos sigue: acepta su respuesta y no se registró
+      assert {:ok, :recibida} = peticion(carlos, {:answer, carlos, "A"})
+      refute_received {:recibido, ^carlos, {:fin_partida, _}}
+      assert [linea] = lineas_del_historial()
+      assert linea =~ "|P-1001|historia|"
+    end
+  end
+
   describe "arranque y parada" do
     test "arranca el supervisor y el gestor de partidas" do
       assert is_pid(Process.whereis(:supervisor_partidas))
