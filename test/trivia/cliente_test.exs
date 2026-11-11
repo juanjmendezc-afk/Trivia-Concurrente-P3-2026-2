@@ -425,10 +425,51 @@ defmodule Trivia.ClienteTest do
       assert errores =~ "Ya estás en una partida"
     end
 
-    test "start_game aún no está implementado (T6)", %{estado: estado} do
+    test "start_game y answer sin partida", %{estado: estado} do
       {_, _, errores} = ejecutar("start_game", estado)
+      assert errores =~ "No estás en ninguna partida"
 
-      assert errores =~ "Comando no reconocido"
+      {_, _, errores} = ejecutar("answer A", estado)
+      assert errores =~ "No estás en ninguna partida"
+    end
+
+    test "start_game con menos de 2 bots y answer antes de iniciar", %{estado: estado} do
+      {_, _, _} = ejecutar("create_game tema=historia preguntas=5 tiempo=15", estado)
+      {_, _, _} = ejecutar("add_bot facil", estado)
+
+      {_, salida, errores} = ejecutar("start_game", estado)
+      assert salida == ""
+      assert errores =~ "Se necesitan al menos 2 bots para iniciar"
+
+      {_, _, errores} = ejecutar("answer A", estado)
+      assert errores =~ "No hay una pregunta abierta"
+    end
+
+    test "start_game inicia, la pregunta llega sola y answer se confirma", %{estado: estado} do
+      {_, _, _} = ejecutar("create_game tema=historia preguntas=5 tiempo=15", estado)
+      {_, _, _} = ejecutar("add_bot facil", estado)
+      {_, _, _} = ejecutar("add_bot facil", estado)
+
+      {resultado, salida, errores} = ejecutar("start_game", estado)
+      assert {:continuar, ^estado} = resultado
+      assert salida =~ "Partida P-1001 iniciada: 5 preguntas"
+      assert errores == ""
+
+      # La prueba hace de Receptor: la pregunta llega sin pedirla
+      assert_receive {:pregunta, %{numero: 1, total: 5, tiempo: 15}}, 1000
+
+      {_, _, errores} = ejecutar("start_game", estado)
+      assert errores =~ "La partida ya empezó"
+
+      {_, _, errores} = ejecutar("answer z", estado)
+      assert errores =~ "Responde A, B, C o D"
+
+      {_, salida, errores} = ejecutar("answer b", estado)
+      assert salida =~ "Respuesta B recibida"
+      assert errores == ""
+
+      {_, _, errores} = ejecutar("answer c", estado)
+      assert errores =~ "Ya respondiste esta pregunta"
     end
   end
 

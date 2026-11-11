@@ -125,6 +125,10 @@ defmodule Trivia.GestorPartidas do
 
   def abandonar(usuario), do: pedir(:abandonar, usuario)
 
+  def iniciar_partida(usuario), do: pedir(:iniciar_partida, usuario)
+
+  def responder(usuario, letra), do: pedir(:responder, {usuario, letra})
+
   def detener, do: pedir(:detener, nil)
 
   # Envía la petición y espera la respuesta con la misma etiqueta
@@ -160,6 +164,14 @@ defmodule Trivia.GestorPartidas do
       {:abandonar, remitente, usuario} ->
         # El estado no cambia aquí: la Partida avisa con :partida_terminada
         send(remitente, {:abandonar, abandonar_en(estado, usuario)})
+        loop(estado)
+
+      {:iniciar_partida, remitente, usuario} ->
+        send(remitente, {:iniciar_partida, iniciar_en(estado, usuario)})
+        loop(estado)
+
+      {:responder, remitente, {usuario, letra}} ->
+        send(remitente, {:responder, responder_en(estado, usuario, letra)})
         loop(estado)
 
       # La Partida avisa al arrancar (y al reiniciarse). El aviso de reinicio es T8.
@@ -219,6 +231,18 @@ defmodule Trivia.GestorPartidas do
     with {:ok, id, pid} <- partida_viva(estado, usuario),
          {:ok, :cancelada} <- GenServer.call(pid, {:abandonar, usuario}) do
       {:ok, %{id: id, resultado: :cancelada}}
+    end
+  end
+
+  defp iniciar_en(estado, usuario) do
+    with {:ok, _id, pid} <- partida_viva(estado, usuario) do
+      GenServer.call(pid, {:start_game, usuario})
+    end
+  end
+
+  defp responder_en(estado, usuario, letra) do
+    with {:ok, _id, pid} <- partida_viva(estado, usuario) do
+      GenServer.call(pid, {:responder, usuario, letra})
     end
   end
 

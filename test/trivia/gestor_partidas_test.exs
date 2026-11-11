@@ -312,6 +312,30 @@ defmodule Trivia.GestorPartidasTest do
                GestorPartidas.crear_partida("pedro", "historia", 5, 15, receptor())
     end
 
+    test "iniciar_partida y responder sin partida" do
+      assert {:error, :sin_partida} = GestorPartidas.iniciar_partida("pedro")
+      assert {:error, :sin_partida} = GestorPartidas.responder("pedro", "A")
+    end
+
+    test "iniciar_partida exige 2 bots y responder exige una ronda abierta" do
+      # La prueba es el receptor de la partida
+      {:ok, _} = GestorPartidas.crear_partida("pedro", "historia", 5, 15, self())
+      {:ok, "bot_1"} = GestorPartidas.agregar_bot("pedro", :facil)
+
+      assert {:error, :bots_insuficientes} = GestorPartidas.iniciar_partida("pedro")
+      assert {:error, :sin_ronda_abierta} = GestorPartidas.responder("pedro", "A")
+
+      {:ok, "bot_2"} = GestorPartidas.agregar_bot("pedro", :facil)
+      assert {:ok, %{id: "P-1001", total: 5}} = GestorPartidas.iniciar_partida("pedro")
+      assert_receive {:pregunta, %{numero: 1}}, 1000
+
+      assert {:error, :partida_iniciada} = GestorPartidas.iniciar_partida("pedro")
+      assert {:error, :partida_iniciada} = GestorPartidas.agregar_bot("pedro", :facil)
+      assert {:error, :letra_invalida} = GestorPartidas.responder("pedro", "E")
+      assert {:ok, :recibida} = GestorPartidas.responder("pedro", "D")
+      assert {:error, :respuesta_repetida} = GestorPartidas.responder("pedro", "A")
+    end
+
     test "dos jugadores con partidas distintas no se interfieren" do
       {:ok, %{id: "P-1001"}} =
         GestorPartidas.crear_partida("pedro", "historia", 5, 15, receptor())
@@ -383,6 +407,8 @@ defmodule Trivia.GestorPartidasTest do
 
       assert {:error, :servidor_no_disponible} = GestorPartidas.agregar_bot("pedro", :facil)
       assert {:error, :servidor_no_disponible} = GestorPartidas.abandonar("pedro")
+      assert {:error, :servidor_no_disponible} = GestorPartidas.iniciar_partida("pedro")
+      assert {:error, :servidor_no_disponible} = GestorPartidas.responder("pedro", "A")
     end
   end
 end

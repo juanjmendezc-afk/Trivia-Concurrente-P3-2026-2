@@ -178,7 +178,17 @@ defmodule Trivia.Cliente do
     estado
   end
 
-  # Comandos que aún no tienen su formato propio (T6 y T9)
+  defp mostrar({:start_game, _}, {:ok, %{id: id, total: total}}, estado) do
+    Util.imprimir("Partida #{id} iniciada: #{total} preguntas. Responde con answer <letra>")
+    estado
+  end
+
+  defp mostrar({:answer, _, letra}, {:ok, :recibida}, estado) do
+    Util.imprimir("Respuesta #{letra} recibida")
+    estado
+  end
+
+  # Comandos que aún no tienen su formato propio (T9)
   defp mostrar(_mensaje, {:ok, datos}, estado) do
     Util.imprimir(inspect(datos))
     estado
