@@ -364,6 +364,73 @@ defmodule Trivia.ServidorPartidasTest do
     end
   end
 
+  describe "nivel del creador según el historial" do
+    # Deja un historial previo en la carpeta temporal (se lee en cada create_game)
+    defp escribir_historial(carpeta, lineas) do
+      File.write!(Path.join(carpeta, "results.log"), Enum.join(lineas, "\n") <> "\n")
+    end
+
+    test "con 60 puntos en un tema la partida nueva sale intermedio; otro tema, básico",
+         %{tmp_dir: carpeta} do
+      escribir_historial(carpeta, [
+        "2026-11-10 20:15:03|P-0901|historia|basico|pedro|pedro:45,bot_1:30,bot_2:-5",
+        "2026-11-11 09:00:00|P-0902|historia|basico|bot_1|pedro:15,bot_1:40,bot_2:10"
+      ])
+
+      pedro = conectar("pedro")
+
+      assert {:ok, %{nivel: :intermedio}} = crear(pedro, "historia")
+      assert {:ok, %{resultado: :cancelada}} = peticion(pedro, {:leave_game, pedro})
+      assert {:ok, %{nivel: :basico}} = crear(pedro, "ciencia")
+    end
+
+    test "el nivel es de cada jugador: 59 sigue en básico y 180 es avanzado",
+         %{tmp_dir: carpeta} do
+      escribir_historial(carpeta, [
+        "2026-11-10 20:15:03|P-0901|historia|basico|carlos|carlos:59,bot_1:30,bot_2:-5",
+        "2026-11-10 21:00:00|P-0902|historia|basico|ana|ana:100,bot_1:30,bot_2:-5",
+        "2026-11-11 09:00:00|P-0903|historia|intermedio|ana|ana:80,bot_1:40,bot_2:10"
+      ])
+
+      carlos = conectar("carlos")
+      ana = conectar("ana")
+      nuevo = conectar("nuevo")
+
+      assert {:ok, %{nivel: :basico}} = crear(carlos, "historia")
+      assert {:ok, %{nivel: :avanzado}} = crear(ana, "historia")
+      assert {:ok, %{nivel: :basico}} = crear(nuevo, "historia")
+    end
+
+    test "las líneas dañadas del historial se saltan", %{tmp_dir: carpeta} do
+      escribir_historial(carpeta, [
+        "esto no es una línea",
+        "2026-11-10 20:15:03|P-0901|historia|basico|pedro|pedro:60,bot_1:30,bot_2:-5",
+        "2026-11-10 20:20:00|P-0902|historia|basico|pedro|pedro:mil"
+      ])
+
+      pedro = conectar("pedro")
+
+      assert {:ok, %{nivel: :intermedio}} = crear(pedro, "historia")
+    end
+
+    test "si no se puede leer el historial usa 0 puntos y avisa en el servidor",
+         %{tmp_dir: carpeta} do
+      escribir_historial(carpeta, [
+        "2026-11-10 20:15:03|P-0901|historia|basico|pedro|pedro:200,bot_1:30,bot_2:-5"
+      ])
+
+      pedro = conectar("pedro")
+      :ok = Trivia.Persistencia.detener()
+
+      salida =
+        ExUnit.CaptureIO.capture_io(:stderr, fn ->
+          assert {:ok, %{nivel: :basico}} = crear(pedro, "historia")
+        end)
+
+      assert salida =~ "No se pudo leer el historial"
+    end
+  end
+
   describe "arranque y parada" do
     test "arranca el supervisor y el gestor de partidas" do
       assert is_pid(Process.whereis(:supervisor_partidas))

@@ -1,16 +1,16 @@
 defmodule Trivia.GestorPartidas do
   alias Trivia.BancoPreguntas
+  alias Trivia.Estadisticas
   alias Trivia.Nivel
   alias Trivia.Persistencia
   alias Trivia.SupervisorPartidas
+  alias Trivia.Util
 
   @nombre :gestor_partidas
   @espera 5000
   @primer_id 1001
   @min_preguntas 1
   @max_preguntas 10
-  # Provisional (T5): hasta que exista Estadisticas todos parten con 0 puntos
-  @puntaje_provisional 0
 
   # ---------- Lógica pura: cada operación devuelve el estado nuevo ----------
 
@@ -245,10 +245,24 @@ defmodule Trivia.GestorPartidas do
 
   defp avisar_reinicio(_que_paso, _receptor), do: :ok
 
-  # PROVISIONAL (T5): Estadisticas (P5) aún no existe, así que se usa un puntaje fijo.
-  # Cuando exista: leer el historial con Persistencia.leer_historial/0 y sumar el
-  # puntaje del usuario en el tema.
-  defp nivel_del_creador(_usuario, _tema), do: Nivel.calcular(@puntaje_provisional)
+  # Nivel del jugador en el tema: puntaje acumulado en el historial -> nivel
+  defp nivel_del_creador(usuario, tema) do
+    historial()
+    |> Estadisticas.puntaje_en_tema(usuario, tema)
+    |> Nivel.calcular()
+  end
+
+  # Líneas del historial; si no se puede leer se informa y se sigue con 0 puntos
+  defp historial do
+    case Persistencia.leer_historial() do
+      {:ok, lineas} ->
+        lineas
+
+      {:error, motivo} ->
+        Util.imprimir("No se pudo leer el historial: #{inspect(motivo)}", :error)
+        []
+    end
+  end
 
   defp agregar_bot_en(estado, usuario, dificultad) do
     with {:ok, _id, pid} <- partida_viva(estado, usuario) do
