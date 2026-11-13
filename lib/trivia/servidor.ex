@@ -54,7 +54,8 @@ defmodule Trivia.Servidor do
     :ok
   end
 
-  # Detiene en orden inverso al arranque lo que haya en marcha (las partidas mueren con su supervisor)
+  # Detiene lo que haya en marcha, en orden inverso al arranque.
+  # Las partidas mueren con su supervisor.
   defp detener_gestores do
     GestorPartidas.detener()
     SupervisorPartidas.detener()
@@ -201,7 +202,7 @@ defmodule Trivia.Servidor do
     end
   end
 
-  # Petición que aún no tiene implementación: exige sesión y luego se rechaza
+  # Petición que el servidor no conoce: exige sesión y luego se rechaza
   defp rechazar(pid_cliente) do
     with {:ok, _usuario} <- GestorJugadores.usuario_de(pid_cliente) do
       {:error, :comando_invalido}

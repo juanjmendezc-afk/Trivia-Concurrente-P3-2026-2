@@ -32,7 +32,7 @@ defmodule Trivia.Bot do
     {:error, :argumentos_invalidos}
   end
 
-  # ---------- Proceso del bot (T6) ----------
+  # ---------- Proceso del bot ----------
 
   # Arranca el bot enlazado a quien lo crea (la partida) y devuelve su pid
   def iniciar(nombre, dificultad, pid_partida) do

@@ -15,7 +15,7 @@ defmodule Trivia.GestorPartidas do
   # ---------- Lógica pura: cada operación devuelve el estado nuevo ----------
 
   # El estado guarda el banco de preguntas, el contador de ids y quién está en qué partida:
-  #   jugadores: %{usuario => id}        partidas: %{id => %{pid:, creador:}}
+  #   jugadores: %{usuario => id}        partidas: %{id => %{pid:, creador:, receptor:}}
   def nuevo(banco) when is_list(banco) do
     %{banco: banco, siguiente: @primer_id, jugadores: %{}, partidas: %{}}
   end
