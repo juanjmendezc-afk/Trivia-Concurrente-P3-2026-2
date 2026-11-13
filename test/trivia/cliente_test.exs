@@ -166,7 +166,8 @@ defmodule Trivia.ClienteTest do
       :sesion_abierta,
       :comando_invalido,
       :parametros_invalidos,
-      :nodo_sin_nombre
+      :nodo_sin_nombre,
+      :persistencia_no_disponible
     ]
 
     test "cada error de la tabla tiene su mensaje propio" do
@@ -188,6 +189,78 @@ defmodule Trivia.ClienteTest do
 
     test "un error desconocido no rompe al cliente" do
       assert "Error: :algo_raro" = Cliente.mensaje_de_error(:algo_raro)
+    end
+  end
+
+  describe "formatear_score/1" do
+    test "puntaje total, partidas y por tema en orden alfabético, con el nivel con tilde" do
+      datos = %{
+        puntaje: 90,
+        partidas: 3,
+        por_tema: %{
+          "historia" => %{puntaje: 60, nivel: :intermedio},
+          "ciencia" => %{puntaje: 30, nivel: :basico},
+          "programacion" => %{puntaje: 200, nivel: :avanzado}
+        }
+      }
+
+      assert Cliente.formatear_score(datos) ==
+               Enum.join(
+                 [
+                   "Puntaje total: 90 en 3 partidas",
+                   "  ciencia: 30 (básico)",
+                   "  historia: 60 (intermedio)",
+                   "  programacion: 200 (avanzado)"
+                 ],
+                 "\n"
+               )
+    end
+
+    test "puntaje negativo" do
+      datos = %{
+        puntaje: -8,
+        partidas: 1,
+        por_tema: %{"historia" => %{puntaje: -8, nivel: :basico}}
+      }
+
+      assert Cliente.formatear_score(datos) ==
+               "Puntaje total: -8 en 1 partidas\n  historia: -8 (básico)"
+    end
+
+    test "jugador sin partidas" do
+      assert Cliente.formatear_score(%{puntaje: 0, partidas: 0, por_tema: %{}}) ==
+               "Puntaje total: 0 en 0 partidas\nAún no has jugado"
+    end
+  end
+
+  describe "formatear_ranking/2" do
+    test "ranking global con posiciones 1..n en el orden recibido" do
+      lista = [{"pedro", 90}, {"ana", 50}, {"beto", 50}, {"carlos", -8}]
+
+      assert Cliente.formatear_ranking(nil, lista) ==
+               Enum.join(
+                 [
+                   "Ranking global",
+                   "  1. pedro — 90",
+                   "  2. ana — 50",
+                   "  3. beto — 50",
+                   "  4. carlos — -8"
+                 ],
+                 "\n"
+               )
+    end
+
+    test "ranking de un tema, con el título en minúscula" do
+      assert Cliente.formatear_ranking("Historia", [{"pedro", 60}]) ==
+               "Ranking de historia\n  1. pedro — 60"
+    end
+
+    test "ranking vacío no es error" do
+      assert Cliente.formatear_ranking(nil, []) ==
+               "Ranking global\nAún no hay partidas registradas"
+
+      assert Cliente.formatear_ranking("geografia", []) ==
+               "Ranking de geografia\nAún no hay partidas registradas"
     end
   end
 
@@ -282,12 +355,11 @@ defmodule Trivia.ClienteTest do
       assert errores =~ "Primero inicia sesión"
     end
 
-    test "con sesión, un comando que el servidor aún no implementa se rechaza", %{estado: estado} do
+    test "con sesión, una petición que el servidor no conoce se rechaza", %{estado: estado} do
       {{:continuar, estado}, _, _} = ejecutar("connect pedro 1234", estado)
-      {resultado, _, errores} = ejecutar("score", estado)
 
-      assert {:continuar, %{usuario: "pedro"}} = resultado
-      assert errores =~ "Comando no reconocido"
+      # Ningún comando del cliente queda sin implementar: se envía la petición a mano
+      assert {:error, :comando_invalido} = Cliente.pedir(estado.nodo, {:list_games, self()})
     end
 
     test "un comando mal escrito no llega al servidor", %{estado: estado} do
@@ -338,6 +410,81 @@ defmodule Trivia.ClienteTest do
 
       assert {:continuar, %{usuario: nil}} = resultado
       assert errores =~ "Primero inicia sesión"
+    end
+  end
+
+  describe "procesar/2 con score y ranking" do
+    @describetag :tmp_dir
+
+    setup %{tmp_dir: carpeta} do
+      lineas = [
+        "2026-11-10 20:15:03|P-0901|historia|basico|pedro|pedro:45,bot_1:30,bot_2:-5",
+        "2026-11-10 20:31:47|P-0902|ciencia|basico|bot_2|carlos:20,bot_1:15,bot_2:38",
+        "2026-11-11 09:00:00|P-0903|historia|basico|bot_1|pedro:15,bot_1:40,bot_2:10"
+      ]
+
+      File.write!(Path.join(carpeta, "results.log"), Enum.join(lineas, "\n") <> "\n")
+
+      {:ok, _pid} = Servidor.iniciar(carpeta)
+      on_exit(fn -> Servidor.detener() end)
+      %{estado: %{nodo: node(), receptor: self(), usuario: nil}}
+    end
+
+    test "score muestra el total, las partidas y el nivel por tema", %{estado: estado} do
+      {{:continuar, estado}, _, _} = ejecutar("connect pedro 1234", estado)
+      {resultado, salida, errores} = ejecutar("score", estado)
+
+      assert {:continuar, %{usuario: "pedro"}} = resultado
+      assert salida =~ "Puntaje total: 60 en 2 partidas"
+      assert salida =~ "historia: 60 (intermedio)"
+      assert errores == ""
+    end
+
+    test "score de un jugador que no ha jugado", %{estado: estado} do
+      {{:continuar, estado}, _, _} = ejecutar("connect maria 1234", estado)
+      {_, salida, _} = ejecutar("score", estado)
+
+      assert salida =~ "Puntaje total: 0 en 0 partidas"
+      assert salida =~ "Aún no has jugado"
+    end
+
+    test "ranking global y por tema, con posiciones y sin bots", %{estado: estado} do
+      {{:continuar, estado}, _, _} = ejecutar("connect pedro 1234", estado)
+
+      {_, global, _} = ejecutar("ranking", estado)
+      assert global =~ "Ranking global\n  1. pedro — 60\n  2. carlos — 20"
+      refute global =~ "bot_"
+
+      {_, ciencia, _} = ejecutar("ranking Ciencia", estado)
+      assert ciencia =~ "Ranking de ciencia\n  1. carlos — 20"
+    end
+
+    test "ranking de un tema que nadie ha jugado no es error", %{estado: estado} do
+      {{:continuar, estado}, _, _} = ejecutar("connect pedro 1234", estado)
+      {_, salida, errores} = ejecutar("ranking geografia", estado)
+
+      assert salida =~ "Ranking de geografia\nAún no hay partidas registradas"
+      assert errores == ""
+    end
+
+    test "sin sesión piden iniciar sesión", %{estado: estado} do
+      {_, _, errores_score} = ejecutar("score", estado)
+      {_, _, errores_ranking} = ejecutar("ranking historia", estado)
+
+      assert errores_score =~ "Primero inicia sesión"
+      assert errores_ranking =~ "Primero inicia sesión"
+    end
+
+    test "si el servidor no puede leer el historial se avisa por la salida de errores", %{
+      estado: estado
+    } do
+      {{:continuar, estado}, _, _} = ejecutar("connect pedro 1234", estado)
+      :ok = Trivia.Persistencia.detener()
+
+      {resultado, _, errores} = ejecutar("score", estado)
+
+      assert {:continuar, %{usuario: "pedro"}} = resultado
+      assert errores =~ "No se pudo leer el historial"
     end
   end
 

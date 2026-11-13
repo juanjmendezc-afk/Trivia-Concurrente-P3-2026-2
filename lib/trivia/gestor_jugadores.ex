@@ -1,4 +1,5 @@
 defmodule Trivia.GestorJugadores do
+  alias Trivia.Estadisticas
   alias Trivia.Persistencia
   alias Trivia.Util
 
@@ -40,6 +41,18 @@ defmodule Trivia.GestorJugadores do
       :error -> {:error, :sin_sesion}
     end
   end
+
+  # score: puntaje, partidas y por tema, calculado desde las líneas del historial
+  def score_desde(lineas, usuario), do: Estadisticas.resumen(lineas, usuario)
+
+  # ranking global (nil) o de un tema; el tema se pasa a minúscula antes de consultar
+  def ranking_desde(lineas, nil), do: {:ok, Estadisticas.ranking(lineas, nil)}
+
+  def ranking_desde(lineas, tema) when is_binary(tema) do
+    {:ok, Estadisticas.ranking(lineas, String.downcase(tema))}
+  end
+
+  def ranking_desde(_lineas, _tema), do: {:error, :parametros_invalidos}
 
   # Usuario sin espacios (dividir por espacios lo devuelve entero) ni separadores
   # del historial, y clave no vacía
@@ -95,6 +108,10 @@ defmodule Trivia.GestorJugadores do
 
   def usuario_de(pid_cliente), do: pedir(:usuario_de, pid_cliente)
 
+  def score(usuario), do: pedir(:score, usuario)
+
+  def ranking(tema), do: pedir(:ranking, tema)
+
   def detener, do: pedir(:detener, nil)
 
   # Envía la petición y espera la respuesta con la misma etiqueta
@@ -132,6 +149,15 @@ defmodule Trivia.GestorJugadores do
         send(remitente, {:usuario_de, buscar_usuario(estado, pid_cliente)})
         loop(estado)
 
+      # score y ranking no cambian el estado: se calculan desde el historial
+      {:score, remitente, usuario} ->
+        send(remitente, {:score, con_historial(&score_desde(&1, usuario))})
+        loop(estado)
+
+      {:ranking, remitente, tema} ->
+        send(remitente, {:ranking, con_historial(&ranking_desde(&1, tema))})
+        loop(estado)
+
       {:detener, remitente, _datos} ->
         # Libera el nombre antes de responder para poder reiniciar sin esperas
         Process.unregister(@nombre)
@@ -159,6 +185,14 @@ defmodule Trivia.GestorJugadores do
     case cerrar_sesion(estado, pid_cliente) do
       {:ok, nuevo_estado, usuario} -> {{:ok, %{usuario: usuario}}, nuevo_estado}
       {:error, motivo} -> {{:error, motivo}, estado}
+    end
+  end
+
+  # Pide las líneas a Persistencia y les aplica el cálculo; si no se pueden leer,
+  # devuelve ese error (el gestor sigue vivo)
+  defp con_historial(calculo) do
+    with {:ok, lineas} <- Persistencia.leer_historial() do
+      calculo.(lineas)
     end
   end
 

@@ -364,6 +364,118 @@ defmodule Trivia.ServidorPartidasTest do
     end
   end
 
+  describe "score y ranking" do
+    # Varias partidas: dos temas, pedro y carlos, bots y una línea dañada
+    defp historial_previo(carpeta) do
+      lineas = [
+        "2026-11-10 20:15:03|P-0901|historia|basico|pedro|pedro:45,bot_1:30,bot_2:-5",
+        "2026-11-10 20:31:47|P-0902|ciencia|basico|bot_2|carlos:20,bot_1:15,bot_2:38",
+        "linea dañada",
+        "2026-11-11 09:00:00|P-0903|historia|basico|bot_1|pedro:15,bot_1:40,bot_2:10",
+        "2026-11-11 10:00:00|P-0904|historia|basico|bot_1|carlos:-8,bot_1:25,bot_2:5"
+      ]
+
+      File.write!(Path.join(carpeta, "results.log"), Enum.join(lineas, "\n") <> "\n")
+    end
+
+    test "sin sesión piden iniciar sesión" do
+      cliente = cliente_falso()
+
+      assert {:error, :sin_sesion} = peticion(cliente, {:score, cliente})
+      assert {:error, :sin_sesion} = peticion(cliente, {:ranking, cliente, nil})
+      assert {:error, :sin_sesion} = peticion(cliente, {:ranking, cliente, "historia"})
+    end
+
+    test "score de cada usuario sale del historial", %{tmp_dir: carpeta} do
+      historial_previo(carpeta)
+      pedro = conectar("pedro")
+      carlos = conectar("carlos")
+
+      assert {:ok,
+              %{
+                puntaje: 60,
+                partidas: 2,
+                por_tema: %{"historia" => %{puntaje: 60, nivel: :intermedio}}
+              }} = peticion(pedro, {:score, pedro})
+
+      assert {:ok, %{puntaje: 12, partidas: 2, por_tema: por_tema}} =
+               peticion(carlos, {:score, carlos})
+
+      assert por_tema == %{
+               "ciencia" => %{puntaje: 20, nivel: :basico},
+               "historia" => %{puntaje: -8, nivel: :basico}
+             }
+    end
+
+    test "un jugador nuevo tiene todo en cero", %{tmp_dir: carpeta} do
+      historial_previo(carpeta)
+      maria = conectar("maria")
+
+      assert {:ok, %{puntaje: 0, partidas: 0, por_tema: %{}}} = peticion(maria, {:score, maria})
+    end
+
+    test "ranking global y por tema, sin bots", %{tmp_dir: carpeta} do
+      historial_previo(carpeta)
+      pedro = conectar("pedro")
+
+      assert {:ok, [{"pedro", 60}, {"carlos", 12}]} = peticion(pedro, {:ranking, pedro, nil})
+
+      assert {:ok, [{"pedro", 60}, {"carlos", -8}]} =
+               peticion(pedro, {:ranking, pedro, "historia"})
+
+      assert {:ok, [{"carlos", 20}]} = peticion(pedro, {:ranking, pedro, "ciencia"})
+      assert {:ok, [{"carlos", 20}]} = peticion(pedro, {:ranking, pedro, "CIENCIA"})
+      assert {:ok, []} = peticion(pedro, {:ranking, pedro, "geografia"})
+    end
+
+    test "sin historial: ranking vacío y score en cero" do
+      pedro = conectar("pedro")
+
+      assert {:ok, []} = peticion(pedro, {:ranking, pedro, nil})
+      assert {:ok, %{puntaje: 0, partidas: 0}} = peticion(pedro, {:score, pedro})
+    end
+
+    test "un tema que no es texto se rechaza y el servidor sigue" do
+      pedro = conectar("pedro")
+
+      assert {:error, :parametros_invalidos} = peticion(pedro, {:ranking, pedro, 123})
+      assert {:ok, []} = peticion(pedro, {:ranking, pedro, nil})
+    end
+
+    test "si no se puede leer el historial devuelven el error y el gestor sigue vivo" do
+      pedro = conectar("pedro")
+      gestor = Process.whereis(:gestor_jugadores)
+      :ok = Trivia.Persistencia.detener()
+
+      assert {:error, :persistencia_no_disponible} = peticion(pedro, {:score, pedro})
+      assert {:error, :persistencia_no_disponible} = peticion(pedro, {:ranking, pedro, nil})
+      assert Process.alive?(gestor)
+      assert {:ok, %{usuario: "pedro"}} = peticion(pedro, {:disconnect, pedro})
+    end
+
+    test "coinciden con una partida real terminada contra 2 bots (criterio 11)" do
+      pedro = conectar("pedro")
+      {:ok, %{id: id}} = crear(pedro, "historia", 1, 1)
+      {:ok, _} = peticion(pedro, {:add_bot, pedro, :facil})
+      {:ok, _} = peticion(pedro, {:add_bot, pedro, :dificil})
+      {:ok, _} = peticion(pedro, {:start_game, pedro})
+      {:ok, :recibida} = peticion(pedro, {:answer, pedro, "A"})
+
+      # El temporizador (1 s) o los bots cierran la única ronda
+      assert_receive {:recibido, ^pedro, {:fin_partida, %{id: ^id, ranking: ranking}}}, 3000
+      [{_posicion, "pedro", puntos}] = Enum.filter(ranking, &match?({_, "pedro", _}, &1))
+
+      assert {:ok, %{puntaje: ^puntos, partidas: 1, por_tema: por_tema}} =
+               peticion(pedro, {:score, pedro})
+
+      assert por_tema == %{"historia" => %{puntaje: puntos, nivel: Trivia.Nivel.calcular(puntos)}}
+
+      # En el histórico solo aparece el humano, con el mismo puntaje
+      assert {:ok, [{"pedro", ^puntos}]} = peticion(pedro, {:ranking, pedro, nil})
+      assert {:ok, [{"pedro", ^puntos}]} = peticion(pedro, {:ranking, pedro, "historia"})
+    end
+  end
+
   describe "nivel del creador según el historial" do
     # Deja un historial previo en la carpeta temporal (se lee en cada create_game)
     defp escribir_historial(carpeta, lineas) do
