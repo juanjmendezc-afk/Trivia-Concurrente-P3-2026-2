@@ -38,6 +38,11 @@ defmodule Trivia.GestorPartidas do
     end
   end
 
+  # Los temas del banco van en minúscula: "Historia" e "historia" son el mismo tema.
+  # Lo que no es texto se deja igual y lo rechaza validar_pedido/6.
+  def normalizar_tema(tema) when is_binary(tema), do: String.downcase(tema)
+  def normalizar_tema(tema), do: tema
+
   # Con el nivel ya calculado, verifica que el tema tenga preguntas de cada nivel.
   # Sortear usa Nivel.reparto/2; aquí el sorteo solo sirve para verificar.
   def verificar_preguntas(preguntas_del_tema, nivel, total) do
@@ -213,6 +218,8 @@ defmodule Trivia.GestorPartidas do
 
   # Devuelve la respuesta para el cliente y el estado resultante
   defp crear_en(estado, usuario, tema, total, tiempo, receptor) do
+    tema = normalizar_tema(tema)
+
     with {:ok, preguntas_del_tema} <-
            validar_pedido(estado, usuario, tema, total, tiempo, receptor),
          nivel = nivel_del_creador(usuario, tema),
@@ -266,13 +273,13 @@ defmodule Trivia.GestorPartidas do
 
   defp agregar_bot_en(estado, usuario, dificultad) do
     with {:ok, _id, pid} <- partida_viva(estado, usuario) do
-      GenServer.call(pid, {:add_bot, dificultad})
+      llamar_partida(pid, {:add_bot, dificultad})
     end
   end
 
   defp abandonar_en(estado, usuario) do
     with {:ok, id, pid} <- partida_viva(estado, usuario),
-         {:ok, resultado} <- GenServer.call(pid, {:abandonar, usuario}) do
+         {:ok, resultado} <- llamar_partida(pid, {:abandonar, usuario}) do
       # resultado es :cancelada (en espera) o :abandonada (en curso)
       {:ok, %{id: id, resultado: resultado}}
     end
@@ -280,13 +287,34 @@ defmodule Trivia.GestorPartidas do
 
   defp iniciar_en(estado, usuario) do
     with {:ok, _id, pid} <- partida_viva(estado, usuario) do
-      GenServer.call(pid, {:start_game, usuario})
+      llamar_partida(pid, {:start_game, usuario})
     end
   end
 
   defp responder_en(estado, usuario, letra) do
     with {:ok, _id, pid} <- partida_viva(estado, usuario) do
-      GenServer.call(pid, {:responder, usuario, letra})
+      llamar_partida(pid, {:responder, usuario, letra})
+    end
+  end
+
+  # Llama a la Partida desde un proceso aparte que el gestor vigila. Si la partida termina
+  # sin responder (por ejemplo, vence el tiempo de la última ronda justo cuando llega un
+  # answer), el que cae es el auxiliar: el gestor recibe :DOWN y sigue atendiendo.
+  defp llamar_partida(pid, peticion) do
+    gestor = self()
+
+    {auxiliar, referencia} =
+      spawn_monitor(fn ->
+        send(gestor, {:respuesta_partida, self(), GenServer.call(pid, peticion)})
+      end)
+
+    receive do
+      {:respuesta_partida, ^auxiliar, respuesta} ->
+        Process.demonitor(referencia, [:flush])
+        respuesta
+
+      {:DOWN, ^referencia, :process, ^auxiliar, _razon} ->
+        {:error, :sin_partida}
     end
   end
 

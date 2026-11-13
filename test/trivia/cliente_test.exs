@@ -224,7 +224,17 @@ defmodule Trivia.ClienteTest do
       }
 
       assert Cliente.formatear_score(datos) ==
-               "Puntaje total: -8 en 1 partidas\n  historia: -8 (básico)"
+               "Puntaje total: -8 en 1 partida\n  historia: -8 (básico)"
+    end
+
+    test "una sola partida va en singular; dos o más, en plural" do
+      por_tema = %{"historia" => %{puntaje: 10, nivel: :basico}}
+
+      assert Cliente.formatear_score(%{puntaje: 10, partidas: 1, por_tema: por_tema}) =~
+               "Puntaje total: 10 en 1 partida\n"
+
+      assert Cliente.formatear_score(%{puntaje: 10, partidas: 2, por_tema: por_tema}) =~
+               "Puntaje total: 10 en 2 partidas\n"
     end
 
     test "jugador sin partidas" do
@@ -511,6 +521,14 @@ defmodule Trivia.ClienteTest do
       assert salida =~ "Partida P-1001 creada: tema historia, 5 preguntas, 15 s por pregunta"
       assert salida =~ "Tu nivel en historia: básico"
       assert salida =~ "add_bot"
+      assert errores == ""
+    end
+
+    test "create_game acepta el tema con mayúsculas y lo muestra en minúscula", %{estado: estado} do
+      {_, salida, errores} = ejecutar("create_game tema=Historia preguntas=5 tiempo=15", estado)
+
+      assert salida =~ "Partida P-1001 creada: tema historia, 5 preguntas"
+      assert salida =~ "Tu nivel en historia: básico"
       assert errores == ""
     end
 
