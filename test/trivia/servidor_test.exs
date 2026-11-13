@@ -153,7 +153,7 @@ defmodule Trivia.ServidorTest do
       cliente = cliente_falso()
 
       assert {:ok, _} = connect(cliente, "pedro", "1234")
-      assert {:error, :comando_invalido} = peticion(cliente, {:score, cliente})
+      assert {:error, :comando_invalido} = peticion(cliente, {:list_games, cliente})
     end
 
     test "un mensaje desconocido no tumba el servidor" do

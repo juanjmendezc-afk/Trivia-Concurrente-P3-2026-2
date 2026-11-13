@@ -162,4 +162,72 @@ defmodule Trivia.GestorJugadoresTest do
       assert {:error, :sin_sesion} = GestorJugadores.buscar_usuario(estado, otro)
     end
   end
+
+  describe "score_desde y ranking_desde" do
+    # Historial de ejemplo: dos temas, dos jugadores y bots
+    defp historial do
+      [
+        "2026-11-10 20:15:03|P-1001|historia|basico|pedro|pedro:45,bot_1:30,bot_2:-5",
+        "2026-11-10 20:31:47|P-1002|ciencia|basico|bot_2|carlos:20,bot_1:15,bot_2:38",
+        "2026-11-11 09:00:00|P-1003|historia|basico|bot_1|pedro:15,bot_1:40,bot_2:10",
+        "linea dañada",
+        "2026-11-11 10:00:00|P-1004|historia|basico|bot_1|carlos:-8,bot_1:25,bot_2:5"
+      ]
+    end
+
+    test "score de un jugador con partidas en dos temas" do
+      assert GestorJugadores.score_desde(historial(), "pedro") ==
+               {:ok,
+                %{
+                  puntaje: 60,
+                  partidas: 2,
+                  por_tema: %{"historia" => %{puntaje: 60, nivel: :intermedio}}
+                }}
+
+      assert {:ok, %{puntaje: 12, partidas: 2, por_tema: por_tema}} =
+               GestorJugadores.score_desde(historial(), "carlos")
+
+      assert por_tema == %{
+               "ciencia" => %{puntaje: 20, nivel: :basico},
+               "historia" => %{puntaje: -8, nivel: :basico}
+             }
+    end
+
+    test "score de un jugador nuevo queda en cero" do
+      assert GestorJugadores.score_desde(historial(), "maria") ==
+               {:ok, %{puntaje: 0, partidas: 0, por_tema: %{}}}
+
+      assert GestorJugadores.score_desde([], "pedro") ==
+               {:ok, %{puntaje: 0, partidas: 0, por_tema: %{}}}
+    end
+
+    test "ranking global y por tema, sin bots" do
+      assert GestorJugadores.ranking_desde(historial(), nil) ==
+               {:ok, [{"pedro", 60}, {"carlos", 12}]}
+
+      assert GestorJugadores.ranking_desde(historial(), "historia") ==
+               {:ok, [{"pedro", 60}, {"carlos", -8}]}
+
+      assert GestorJugadores.ranking_desde(historial(), "ciencia") == {:ok, [{"carlos", 20}]}
+    end
+
+    test "el tema se pasa a minúscula antes de consultar" do
+      assert GestorJugadores.ranking_desde(historial(), "HISTORIA") ==
+               GestorJugadores.ranking_desde(historial(), "historia")
+
+      assert GestorJugadores.ranking_desde(historial(), "Ciencia") == {:ok, [{"carlos", 20}]}
+    end
+
+    test "tema que nadie ha jugado o historial vacío dan lista vacía" do
+      assert GestorJugadores.ranking_desde(historial(), "geografia") == {:ok, []}
+      assert GestorJugadores.ranking_desde([], nil) == {:ok, []}
+    end
+
+    test "un tema que no es texto se rechaza sin romper nada" do
+      assert GestorJugadores.ranking_desde(historial(), 123) == {:error, :parametros_invalidos}
+
+      assert GestorJugadores.ranking_desde(historial(), :historia) ==
+               {:error, :parametros_invalidos}
+    end
+  end
 end

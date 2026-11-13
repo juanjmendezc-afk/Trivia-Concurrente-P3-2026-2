@@ -189,11 +189,24 @@ defmodule Trivia.Cliente do
   end
 
   defp mostrar({:leave_game, _}, {:ok, %{id: id, resultado: :abandonada}}, estado) do
-    Util.imprimir("Abandonaste la partida #{id}: terminó y quedó registrada con los puntajes actuales")
+    Util.imprimir(
+      "Abandonaste la partida #{id}: terminó y quedó registrada con los puntajes actuales"
+    )
+
     estado
   end
 
-  # Comandos que aún no tienen su formato propio (T9)
+  defp mostrar({:score, _}, {:ok, datos}, estado) do
+    Util.imprimir(formatear_score(datos))
+    estado
+  end
+
+  defp mostrar({:ranking, _, tema}, {:ok, lista}, estado) when is_list(lista) do
+    Util.imprimir(formatear_ranking(tema, lista))
+    estado
+  end
+
+  # Respuesta correcta sin formato propio: se muestra tal cual
   defp mostrar(_mensaje, {:ok, datos}, estado) do
     Util.imprimir(inspect(datos))
     estado
@@ -279,6 +292,41 @@ defmodule Trivia.Cliente do
   defp nombre_nivel(:intermedio), do: "intermedio"
   defp nombre_nivel(:avanzado), do: "avanzado"
 
+  # ---------- Lógica pura: texto de score y ranking ----------
+
+  # Puntaje total, partidas y una línea por tema (en orden alfabético)
+  def formatear_score(%{puntaje: puntaje, partidas: partidas, por_tema: por_tema}) do
+    if partidas == 0 do
+      "Puntaje total: 0 en 0 partidas\nAún no has jugado"
+    else
+      temas =
+        por_tema
+        |> Enum.sort()
+        |> Enum.map(fn {tema, %{puntaje: puntos, nivel: nivel}} ->
+          "  #{tema}: #{puntos} (#{nombre_nivel(nivel)})"
+        end)
+
+      Enum.join(["Puntaje total: #{puntaje} en #{partidas} partidas" | temas], "\n")
+    end
+  end
+
+  # Título y una línea por jugador: "posición. usuario — puntaje"
+  def formatear_ranking(tema, []), do: titulo_ranking(tema) <> "\nAún no hay partidas registradas"
+
+  def formatear_ranking(tema, lista) do
+    lineas =
+      lista
+      |> Enum.with_index(1)
+      |> Enum.map(fn {{usuario, puntaje}, posicion} ->
+        "  #{posicion}. #{usuario} — #{puntaje}"
+      end)
+
+    Enum.join([titulo_ranking(tema) | lineas], "\n")
+  end
+
+  defp titulo_ranking(nil), do: "Ranking global"
+  defp titulo_ranking(tema), do: "Ranking de #{String.downcase(tema)}"
+
   # ---------- Lógica pura: mensajes de error (sección 6) ----------
 
   def mensaje_de_error(:sin_sesion), do: "Primero inicia sesión: connect <usuario> <clave>"
@@ -311,6 +359,11 @@ defmodule Trivia.Cliente do
   end
 
   def mensaje_de_error(:comando_invalido), do: "Comando no reconocido"
+
+  # score y ranking: el servidor no pudo leer el historial
+  def mensaje_de_error(:persistencia_no_disponible) do
+    "No se pudo leer el historial; intenta más tarde"
+  end
 
   def mensaje_de_error(:parametros_invalidos) do
     "Revisa los parámetros del comando (por ejemplo, usuario sin espacios, barras verticales, " <>
