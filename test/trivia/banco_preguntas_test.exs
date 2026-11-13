@@ -61,6 +61,30 @@ defmodule Trivia.BancoPreguntasTest do
     assert length(enunciados) == length(Enum.uniq(enunciados))
   end
 
+  test "todas las preguntas sorteadas son del tema recibido" do
+    assert {:ok, resultado} = BancoPreguntas.sortear(preguntas_atom(), :avanzado, 10)
+    assert Enum.all?(resultado, fn pregunta -> pregunta.tema == "historia" end)
+  end
+
+  test "el reparto del sorteo coincide con el de cada nivel del jugador" do
+    for nivel <- [:basico, :intermedio, :avanzado] do
+      assert {:ok, resultado} = BancoPreguntas.sortear(preguntas_atom(), nivel, 10)
+      cantidades = Enum.frequencies_by(resultado, fn pregunta -> pregunta.nivel end)
+
+      for {nivel_pregunta, esperadas} <- Trivia.Nivel.reparto(nivel, 10) do
+        assert Map.get(cantidades, nivel_pregunta, 0) == esperadas
+      end
+    end
+  end
+
+  test "ejemplos del enunciado: 5 en básico y 10 en avanzado" do
+    assert {:ok, cinco} = BancoPreguntas.sortear(preguntas_atom(), :basico, 5)
+    assert Enum.map(cinco, & &1.nivel) == [:basico, :basico, :basico, :basico, :intermedio]
+
+    assert {:ok, diez} = BancoPreguntas.sortear(preguntas_atom(), :avanzado, 10)
+    assert Enum.frequencies_by(diez, & &1.nivel) == %{intermedio: 3, avanzado: 7}
+  end
+
   test "informa cuando no hay suficientes preguntas de algún nivel" do
     insuficientes = Enum.take(preguntas_string(), 5)
 

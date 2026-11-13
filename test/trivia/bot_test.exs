@@ -40,7 +40,7 @@ defmodule Trivia.BotTest do
     assert {:error, _} = Bot.decidir(:facil, :basico, "A", 15.5)
   end
 
-  # ---------- Proceso del bot (T6) ----------
+  # ---------- Proceso del bot ----------
   # La prueba hace de partida: recibe las llamadas del bot y las contesta a mano.
 
   describe "proceso" do

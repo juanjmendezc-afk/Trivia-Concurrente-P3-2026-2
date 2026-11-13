@@ -109,6 +109,15 @@ defmodule Trivia.EstadisticasTest do
       assert Estadisticas.puntaje_en_tema([], "pedro", "historia") == 0
     end
 
+    # Prueba 7 del enunciado: el nivel se calcula desde las líneas, sin abrir el archivo
+    test "un tema nunca jugado deja al jugador en nivel básico" do
+      nunca_jugado = Estadisticas.puntaje_en_tema(historial(), "pedro", "geografia")
+      sin_historial = Estadisticas.puntaje_en_tema([], "pedro", "historia")
+
+      assert Trivia.Nivel.calcular(nunca_jugado) == :basico
+      assert Trivia.Nivel.calcular(sin_historial) == :basico
+    end
+
     test "el puntaje puede ser negativo" do
       assert Estadisticas.puntaje_en_tema(historial(), "carlos", "historia") == -8
     end
