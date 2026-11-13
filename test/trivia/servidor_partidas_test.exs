@@ -496,6 +496,29 @@ defmodule Trivia.ServidorPartidasTest do
       assert {:ok, %{nivel: :basico}} = crear(pedro, "ciencia")
     end
 
+    test "el tema con mayúsculas es el mismo tema: mismo nivel, mismas preguntas y mismo historial",
+         %{tmp_dir: carpeta} do
+      escribir_historial(carpeta, [
+        "2026-11-10 20:15:03|P-0901|historia|basico|pedro|pedro:60,bot_1:30,bot_2:-5"
+      ])
+
+      pedro = conectar("pedro")
+
+      # El nivel sale del historial de "historia"
+      assert {:ok, %{nivel: :intermedio}} = crear(pedro, "HISTORIA")
+      {:ok, _} = peticion(pedro, {:add_bot, pedro, :facil})
+      {:ok, _} = peticion(pedro, {:add_bot, pedro, :facil})
+      {:ok, _} = peticion(pedro, {:start_game, pedro})
+
+      assert_receive {:recibido, ^pedro, {:pregunta, %{enunciado: enunciado}}}, 1000
+      assert enunciado =~ "historia"
+
+      # La partida queda registrada con el tema en minúscula
+      assert {:ok, %{resultado: :abandonada}} = peticion(pedro, {:leave_game, pedro})
+      assert {:ok, [_previa, nueva]} = Trivia.Persistencia.leer_historial()
+      assert nueva =~ "|historia|intermedio|"
+    end
+
     test "el nivel es de cada jugador: 59 sigue en básico y 180 es avanzado",
          %{tmp_dir: carpeta} do
       escribir_historial(carpeta, [

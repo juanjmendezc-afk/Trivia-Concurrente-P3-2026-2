@@ -159,6 +159,9 @@ defmodule Trivia.Cliente do
          {:ok, %{id: id, nivel: nivel}},
          estado
        ) do
+    # El servidor guarda el tema en minúscula; se muestra igual
+    tema = String.downcase(tema)
+
     Util.imprimir(
       "Partida #{id} creada: tema #{tema}, #{preguntas} preguntas, #{tiempo} s por pregunta"
     )
@@ -306,9 +309,12 @@ defmodule Trivia.Cliente do
           "  #{tema}: #{puntos} (#{nombre_nivel(nivel)})"
         end)
 
-      Enum.join(["Puntaje total: #{puntaje} en #{partidas} partidas" | temas], "\n")
+      Enum.join(["Puntaje total: #{puntaje} en #{texto_partidas(partidas)}" | temas], "\n")
     end
   end
+
+  defp texto_partidas(1), do: "1 partida"
+  defp texto_partidas(cantidad), do: "#{cantidad} partidas"
 
   # Título y una línea por jugador: "posición. usuario — puntaje"
   def formatear_ranking(tema, []), do: titulo_ranking(tema) <> "\nAún no hay partidas registradas"
