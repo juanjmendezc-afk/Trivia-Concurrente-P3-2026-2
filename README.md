@@ -5,8 +5,8 @@ Proyecto final de Programación III. Cada humano juega una partida contra dos o 
 ## Integrantes
 
 - Samuel Arturo Rodríguez.
-- Juanjo — completar nombre y apellidos antes de entregar.
-- Daniel — completar nombre y apellidos antes de entregar.
+- Juan Jose Mendez Carranza.
+- Daniel Yizack Gutiérrez Ruiz.
 
 El reparto inicial está en `docs/arquitectura.md`; las contribuciones realizadas y las tareas asumidas por otro integrante están registradas en `docs/progreso.md` y `docs/uso-ia.md`.
 
