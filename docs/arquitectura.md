@@ -390,7 +390,7 @@ Si un módulo puro aún no existe cuando se necesita (T5, T6), se usa una versi�
 
 ## 8. Reparto y fechas del plan inicial
 
-La fecha del plan era **jueves 12 de noviembre, 11:59 pm** y estaba marcada como asumida; no constituye confirmación del plazo oficial. Consultar al profesor.
+La fecha del plan era el jueves 12 de noviembre (asumida). La entrega oficial es el **domingo 15 de noviembre, 11:59 pm**.
 
 La tabla siguiente es el reparto inicial, no una atribución final. La bitácora indica que Juanjo asumió Puntaje y Estadisticas; Samuel aportó la decisión del bot, y Daniel Nivel, el banco JSON y BancoPreguntas.
 

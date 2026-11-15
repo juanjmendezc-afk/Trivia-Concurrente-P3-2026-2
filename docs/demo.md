@@ -7,7 +7,7 @@ Este es un guion para ejecutar, no un acta de pruebas aprobadas. Las casillas pe
 1. Completar nombres de integrantes en README y revisar el registro de IA.
 2. Preparar una copia de ensayo del repositorio para no afectar usuarios e historial que quieran conservar. No borrar datos entre la medición previa y posterior del reinicio.
 3. Desde esa copia ejecutar `mix deps.get`, `mix compile --warnings-as-errors` y `mix test`. Guardar el resumen real, fecha y versión de Elixir.
-4. Abrir tres terminales como indica README: `servidor`, `pedro` y `carlos`, con la misma cookie. En Windows se puede usar `iex.bat`.
+4. Abrir tres terminales como indica README: `servidor`, `pedro` y `carlos`. En PowerShell usar `iex.bat` (en un solo equipo no hace falta cookie).
 5. Tener a mano el código del bot, Partida, Persistencia y Cliente. El primer cliente usará historia y el segundo ciencia; no necesitan compartir una misma partida.
 
 En este documento, **PowerShell** significa la terminal antes de abrir IEx; **IEx servidor** significa la consola Elixir del servidor; **cliente** significa el prompt del juego después de `Trivia.Cliente.iniciar()`.

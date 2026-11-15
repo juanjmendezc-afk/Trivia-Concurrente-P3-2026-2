@@ -5,7 +5,7 @@ Proyecto final de Programación III. Cada humano juega una partida contra dos o 
 ## Integrantes
 
 - Samuel Arturo Rodríguez.
-- Juan Jose Mendez Carranza.
+- Juan José Méndez Carranza.
 - Daniel Yizack Gutiérrez Ruiz.
 
 El reparto inicial está en `docs/arquitectura.md`; las contribuciones realizadas y las tareas asumidas por otro integrante están registradas en `docs/progreso.md` y `docs/uso-ia.md`.
@@ -27,14 +27,14 @@ Si Mix solicita instalar Hex, acepta para descargar las dependencias. Conserva `
 
 ## Arranque en un mismo computador
 
-Abre tres terminales en la raíz del proyecto. Los nombres de nodo deben ser diferentes. La cookie de ejemplo es solo para el ensayo local; usa el mismo valor en las tres terminales.
+Abre tres terminales en la raíz del proyecto. Los nombres de nodo deben ser diferentes. En PowerShell (la terminal de VS Code en Windows) usa `iex.bat`, porque `iex` es otro comando de PowerShell.
 
 ### Terminal 1 servidor
 
 En PowerShell:
 
 ```powershell
-iex --sname servidor --cookie trivia_demo -S mix
+iex.bat --sname servidor -S mix
 ```
 
 Dentro de IEx:
@@ -49,7 +49,7 @@ Debe mostrar el aviso de servidor listo y devolver `{:ok, pid}`. El nodo tendrá
 ### Terminal 2 primer cliente
 
 ```powershell
-iex --sname pedro --cookie trivia_demo -S mix
+iex.bat --sname pedro -S mix
 ```
 
 Dentro de IEx:
@@ -61,7 +61,7 @@ Trivia.Cliente.iniciar()
 ### Terminal 3 segundo cliente
 
 ```powershell
-iex --sname carlos --cookie trivia_demo -S mix
+iex.bat --sname carlos -S mix
 ```
 
 Dentro de IEx:
@@ -74,7 +74,7 @@ Trivia.Cliente.iniciar()
 
 ### Clientes en otros computadores
 
-Todos necesitan una copia del proyecto compilada, nombres de nodo distintos, una cookie común y conectividad entre los equipos. Usa el nombre real que devolvió `node()` en el servidor:
+Todos necesitan una copia del proyecto compilada, nombres de nodo distintos, una cookie común (por ejemplo `iex.bat --sname pedro --cookie trivia_demo -S mix`, con el mismo valor en todos los equipos, servidor incluido) y conectividad entre los equipos. Usa el nombre real que devolvió `node()` en el servidor:
 
 ```elixir
 Trivia.Cliente.iniciar(:"servidor@NOMBRE-EQUIPO-REAL")
