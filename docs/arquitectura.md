@@ -1,6 +1,6 @@
 # Arquitectura — Trivia Concurrente
 
-> Diseño acordado del proyecto. Se construye sección por sección.
+> Diseño y comportamiento de la versión revisada el 15 de noviembre de 2026. La sección 8 conserva el reparto inicial como antecedente; la bitácora registra las contribuciones finales.
 > Fuentes: `docs/enunciado-resumen.md` (enunciado del proyecto) y `docs/convenciones-profesor.md` (guías 06–12).
 
 | # | Sección | Estado |
@@ -40,7 +40,7 @@ LÓGICA PURA (sin proceso, fácil de probar):
 
 ### Ideas clave
 
-- **El servidor es el único dueño del estado.** Solo él lee y escribe archivos y conoce las respuestas correctas.
+- **El servidor es el único dueño del estado.** Solo él lee y escribe archivos y conoce la respuesta durante la ronda. La correcta se revela al cliente al cerrar la ronda.
 - **Cada partida es un proceso independiente** con sus propios bots. Si una falla, las demás siguen.
 - **El cliente no tiene lógica de juego.** Traduce comandos en mensajes y muestra lo que recibe.
 - **Dos procesos en el cliente** (enunciado 8.3):
@@ -72,7 +72,7 @@ Todos los módulos van en `lib/trivia/` con el prefijo `Trivia.` (por ejemplo `l
 | `GestorPartidas` | Proceso | Guarda el banco de preguntas en memoria, crea partidas, sabe en qué partida está cada jugador y detecta reinicios de partidas para avisar al creador. |
 | `SupervisorPartidas` | DynamicSupervisor | Arranca cada partida y la reinicia si falla (`restart: :transient`). |
 | `Partida` | GenServer | Una partida: jugadores, bots, rondas, temporizador y puntajes. Notifica a los Receptores y a los bots. Al terminar, envía la línea del historial a `Persistencia`. |
-| `Bot` | Proceso + función pura | El proceso recibe cada pregunta y programa su respuesta. La función pura `decidir` elige la letra y el retardo. |
+| `Bot` | Proceso + función pura | El proceso recibe cada pregunta y programa su respuesta. `decidir/4` está separada de procesos y archivos, pero usa azar; no es pura en el sentido determinista estricto. |
 | `Persistencia` | Proceso | **Único** que lee y escribe en `data/`: usuarios, preguntas e historial. |
 
 ### Lógica pura (sin procesos ni archivos)
@@ -92,13 +92,13 @@ Todos los módulos van en `lib/trivia/` con el prefijo `Trivia.` (por ejemplo `l
 |---|---|---|
 | `Cliente` | Proceso | `iniciar/0`: se conecta al nodo servidor (`servidor@<mismo equipo>`; `iniciar/1` recibe el nodo), arranca el Receptor y entra al bucle leer comando → enviar → mostrar respuesta. `salir` (comando local) cierra el bucle y, si hay sesión, envía `disconnect` antes. |
 | `Receptor` | Proceso | Bucle `receive` que imprime las notificaciones (preguntas, cierre de ronda, ranking final, avisos). |
-| `Util` | Lógica pura | `leer` e `imprimir` como en la guía 06; errores por la salida de errores. |
+| `Util` | Entrada y salida de consola | `leer` e `imprimir` como en la guía 06; errores por la salida de errores. |
 
 ---
 
 ## 3. Formatos de datos
 
-Todos los archivos van en `proyecto_trivia/data/`. Solo `Persistencia` los toca. La ruta se arma con `Path.join` y `__DIR__` (guía 11).
+Por defecto los archivos están en `data/`, en la raíz del proyecto; `Servidor.iniciar(carpeta)` admite otra carpeta para ensayos. Solo `Persistencia` los toca. La ruta se arma con `Path.join` y `__DIR__` (guía 11).
 
 **Temas del banco de preguntas:** `historia`, `ciencia`, `geografia`, `programacion`.
 
@@ -198,13 +198,18 @@ El cliente envía a `{:servidor, nodo_servidor}` y espera con `receive ... after
 - `connect` → `{:ok, %{usuario: "pedro", registrado: true}}` (`registrado: false` si el usuario ya existía)
 - `disconnect` → `{:ok, %{usuario: "pedro"}}`
 - `add_bot` → `{:ok, "bot_1"}`
-- `leave_game` → `{:ok, %{id: "P-1001", resultado: :cancelada}}` (T5; `resultado` permitirá a T7 distinguir la cancelada de la abandonada en curso)
+- `leave_game` → `{:ok, %{id: "P-1001", resultado: :cancelada}}` (`resultado` es `:cancelada` antes de iniciar o `:abandonada` si estaba en curso)
+- `ranking` → `{:ok, [{"pedro", 120}, {"carlos", 95}]}`
+- `start_game` → `{:ok, %{id: "P-1001", total: 5}}`
+- `answer` → `{:ok, :recibida}`
 - `score` → `{:ok, %{puntaje: 120, partidas: 6, por_tema: %{"historia" => %{puntaje: 75, nivel: :intermedio}}}}`
 
 ### ② Servidor → resto del servidor (interno)
 
 - **Gestores y Persistencia:** mensajes estilo guía 12, `{:accion, remitente, datos}` → respuesta al remitente.
-- **Partida** (GenServer): `GenServer.call(pid_partida, {:add_bot, :facil})`, `{:start_game}`, `{:responder, "pedro", "B"}`, `{:abandonar, "pedro"}`.
+- **Partida** (GenServer): `GenServer.call(pid_partida, {:add_bot, :facil})`, `{:start_game, "pedro"}`, `{:responder, "pedro", "B"}`, `{:abandonar, "pedro"}`.
+- `GestorPartidas.llamar_partida/2` hace `GenServer.call` desde un auxiliar creado con `spawn_monitor`. Si ese auxiliar muere, el gestor recibe `:DOWN` y responde `{:error, :sin_partida}`; si responde, elimina el monitor con `Process.demonitor(ref, [:flush])`. Así una partida que termina durante la llamada no tumba al gestor.
+- En esta versión `avisar_gestor/1` usa `send`, no `GenServer.cast`: GestorPartidas es un proceso con receive. El resumen del enunciado menciona cast; el equipo debe contrastar ese requisito con el profesor antes de afirmar cumplimiento literal.
 - La Partida, al arrancar, envía `{:partida_iniciada, id, self()}` al `GestorPartidas`. Si el `id` ya existía con otro PID → hubo reinicio → el gestor actualiza el PID y avisa al creador.
 - Al terminar, la Partida llama `Persistencia.guardar_resultado(linea)` con la línea **sin fecha** (`P-1001|historia|basico|pedro|pedro:45,bot_1:30`); `Persistencia` le antepone la fecha y hora de Colombia (decisión de T2). También envía `{:partida_terminada, id}` al `GestorPartidas` (libera a los jugadores).
 
@@ -222,10 +227,11 @@ Bots y Receptores reciben **exactamente las mismas** notificaciones.
 ### ④ Bot → Partida
 
 1. El bot recibe `{:pregunta, ...}` igual que un cliente.
-2. Pide a su partida el nivel y la respuesta de la pregunta actual: `Partida.datos_pregunta(pid_partida)`. Estos datos nunca van a los clientes.
+2. Pide a su partida el nivel y la respuesta de la pregunta actual: `Partida.datos_pregunta(pid_partida)`. Estos datos no se incluyen en la pregunta enviada a los clientes; la respuesta correcta se revela al cierre.
 3. Llama a `Bot.decidir(...)` → `{letra, retardo_ms}`.
-4. Programa `Process.send_after(self(), {:responder, letra}, retardo_ms)`.
-5. Al recibir ese mensaje, envía `{:responder, "bot_1", letra}` a la partida: **el mismo camino que un humano** (el enunciado prohíbe caminos especiales para bots).
+4. Programa `Process.send_after(self(), {:responder, numero, letra}, retardo_ms)`.
+5. El bucle acepta `{:responder, ^ronda, letra}`; un número de ronda anterior se descarta. El cierre de una ronda también se valida en la Partida.
+6. Al recibir el mensaje válido, usa `GenServer.call` para enviar `{:responder, "bot_1", letra}` a la partida: **el mismo camino que un humano** (el enunciado prohíbe caminos especiales para bots).
 
 ---
 
@@ -263,8 +269,8 @@ Bots y Receptores reciben **exactamente las mismas** notificaciones.
 
 ### D. `add_bot` y `start_game`
 
-- **`add_bot`:** si está `esperando` y hay menos de 4 jugadores → crea un proceso `Bot` enlazado (`bot_1`, `bot_2`, …) y lo agrega como participante.
-- **`start_game`:** si hay al menos 2 bots → `BancoPreguntas` sortea según el reparto del nivel → pasa a `en_curso` → abre la ronda 1.
+- **`add_bot`:** si está `esperando` y hay menos de 4 jugadores, agrega los datos del bot (`bot_1`, `bot_2`, …), con dificultad y PID todavía `nil`. No crea su proceso en este paso.
+- **`start_game`:** valida al creador y al menos 2 bots; sortea con `BancoPreguntas`, pasa a `en_curso` y `arrancar_bots/1` crea sus procesos con `Bot.iniciar/3` (`spawn_link`). Envía a sí misma `{:abrir_ronda, 1}` y responde al gestor. La apertura se procesa luego en `handle_info/2`; Cliente y Receptor pueden imprimir la confirmación y la pregunta en distinto orden.
 
 ### E. Una ronda
 
@@ -289,16 +295,17 @@ Bots y Receptores reciben **exactamente las mismas** notificaciones.
 
 ### G. Abandono (`leave_game`, `disconnect` o se cierra el cliente)
 
-- **`esperando` y sale el creador:** se cancela, `{:aviso, ...}`, **no** se registra.
-- **`en_curso`:** termina de inmediato con los puntajes hasta ese momento, **se registra** en el historial y se envía `{:fin_partida, ...}`.
+- **`esperando` y sale el creador:** responde `:cancelada`, avisa al gestor que terminó y sale normalmente. No escribe historial ni envía una notificación de fin; el Cliente muestra la respuesta del comando.
+- **`en_curso`:** termina de inmediato con los puntajes de las rondas cerradas (la abierta no se puntúa), **se registra** en el historial y se envía `{:fin_partida, ...}`.
 - Si el cliente se cierra de golpe, el `Servidor` lo detecta (lo está vigilando), cierra la sesión y aplica lo anterior.
 
 ### H. Reinicio (la partida falla)
 
-1. `SupervisorPartidas` la reinicia con los mismos datos de arranque: `esperando`, solo el creador, sin bots ni puntajes.
-2. Los bots mueren con ella (están enlazados).
+1. Con `restart: :transient`, una terminación anormal hace que `SupervisorPartidas` la reinicie con los mismos datos de arranque: `esperando`, solo el creador, sin bots ni puntajes.
+2. Si ya había bots en ejecución, mueren por su enlace con la partida. La partida nueva empieza sin bots; se recrean al agregarlos e iniciar otra vez. Una terminación normal no provoca reinicio.
 3. La partida nueva envía `{:partida_iniciada, id, nuevo_pid}` → `GestorPartidas` ve que el PID cambió, lo actualiza y envía al Receptor del creador: *"Tu partida falló y se reinició sin progreso. Agrega bots y ejecuta start_game."*
-4. No se registra nada en el historial.
+4. No se registra el progreso de la partida fallida. El gestor mantiene la asociación del creador y reemplaza el PID; no restaura puntajes.
+5. Esta supervisión cubre partidas, no los gestores ni Persistencia, que no tienen un supervisor raíz que los relance automáticamente.
 
 ---
 
@@ -326,6 +333,7 @@ El servidor responde `{:error, :atomo}`. El **cliente** traduce el átomo a text
 | extra | `:sesion_abierta` | Ya tienes una sesión abierta; usa disconnect antes de conectar otro usuario |
 | extra | `:comando_invalido` | Comando no reconocido |
 | extra | `:parametros_invalidos` | Revisa los parámetros del comando (por ejemplo, usuario sin espacios, barras verticales, comas ni dos puntos; preguntas de 1 a 10 o tiempo mayor a 0) |
+| extra | `:persistencia_no_disponible` | No se pudo leer el historial; intenta más tarde |
 | extra (solo cliente) | `:nodo_sin_nombre` | Este nodo no tiene nombre. Arranca con: iex --sname <nombre> -S mix |
 
 ---
@@ -352,8 +360,8 @@ Cada tarea = una sesión de Claude Code. Al terminar: `mix test` en verde, entra
 | **P2** | `data/questions.json` | 96 preguntas: 4 temas × 3 niveles × 8, formato de la sección 3 | — |
 | **P3** | `Trivia.BancoPreguntas` | `sortear(preguntas_del_tema, nivel, total)` → `{:ok, lista_ordenada}` \| `{:error, :preguntas_insuficientes}` | 2 |
 | **P4** | `Trivia.Puntaje` | `calcular(nivel_pregunta, resultado, ms_restantes, tiempo_pregunta)` → entero; `resultado` es `:correcta` \| `:incorrecta` \| `:sin_responder` | 1 |
-| **P5** | `Trivia.Estadisticas` | `parsear_linea(linea)` · `resumen(lineas, usuario)` → puntaje, partidas y puntaje por tema · `ranking(lineas, tema_o_nil)` → `[{usuario, puntaje}]` ordenado. Ignoran bots. | 5 |
-| **P6** | `Trivia.Bot.decidir/4` | Hecha. Pendiente: error como `{:error, :argumentos_invalidos}` | 6 |
+| **P5** | `Trivia.Estadisticas` | `parsear_linea(linea)` · `puntaje_en_tema(lineas, usuario, tema)` · `resumen(lineas, usuario)` → puntaje, partidas y puntaje por tema · `ranking(lineas, tema_o_nil)` → `[{usuario, puntaje}]` ordenado. Ignoran bots. | 5 |
+| **P6** | `Trivia.Bot.decidir/4` | Implementada: devuelve `{letra, retardo_ms}` o `{:error, :argumentos_invalidos}` | 6 |
 
 Archivos: `lib/trivia/<modulo>.ex` y `test/trivia/<modulo>_test.exs`.
 P1 + P3 + P4 + P5 + P6 cubren las 5 pruebas mínimas del enunciado.
@@ -380,9 +388,11 @@ Si un módulo puro aún no existe cuando se necesita (T5, T6), se usa una versi�
 
 ---
 
-## 8. Reparto y fechas
+## 8. Reparto y fechas del plan inicial
 
-Entrega: **jueves 12 de noviembre, 11:59 pm** (fecha asumida).
+La fecha del plan era **jueves 12 de noviembre, 11:59 pm** y estaba marcada como asumida; no constituye confirmación del plazo oficial. Consultar al profesor.
+
+La tabla siguiente es el reparto inicial, no una atribución final. La bitácora indica que Juanjo asumió Puntaje y Estadisticas; Samuel aportó la decisión del bot, y Daniel Nivel, el banco JSON y BancoPreguntas.
 
 | Quién | Tareas | Fecha límite |
 |---|---|---|
